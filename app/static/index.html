@@ -1,0 +1,1523 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Грея душу — запись на мастер-классы</title>
+    <link rel="icon" type="image/png" href="https://greydushy.com/logo.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Manrope:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        :root {
+            --cream: #f8eed8;
+            --paper: #f3e3c4;
+            --blush: #f0c089;
+            --rose: #e8a15a;
+            --terracotta: #e07030;
+            --clay: #c45a22;
+            --sun: #f4d56a;
+            --ink: #4a3324;
+            --muted: #7a5c45;
+            --white: #fffaf1;
+            --shadow: 0 16px 34px rgba(196, 90, 34, .14);
+            --radius: 36px;
+            --font-display: "Nunito", system-ui, sans-serif;
+            --font-sans: "Manrope", system-ui, sans-serif;
+            --font-script: "Marck Script", cursive;
+        }
+
+        *, *:before, *:after {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            margin: 0;
+            padding: 0 0 110px 0;
+            color: var(--ink);
+            font-family: var(--font-sans);
+            background-color: var(--cream);
+            background-image:
+                radial-gradient(1200px 600px at 8% -8%, rgba(224, 112, 48, .16), transparent 55%),
+                radial-gradient(900px 500px at 100% 0%, rgba(244, 213, 106, .12), transparent 50%);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body:before {
+            content: "";
+            pointer-events: none;
+            position: fixed;
+            inset: 0;
+            z-index: 8;
+            opacity: .07;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        a { color: var(--clay); text-decoration: none; border-bottom: 1px dashed var(--blush); }
+        h1, h2, h3 {
+            font-family: var(--font-display);
+            font-weight: 800;
+            line-height: 1.15;
+            margin: 0;
+            letter-spacing: -.03em;
+            color: var(--ink);
+        }
+        p { margin: 0 0 .75rem; }
+
+        .app-header {
+            position: relative;
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 1.4rem 1.15rem .9rem;
+            overflow: hidden;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        .logo-img {
+            width: 68px;
+            height: 68px;
+            flex: 0 0 68px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            box-shadow: 0 10px 20px #e0703047;
+            animation: logo-bob 5.5s ease-in-out infinite;
+            background: var(--white);
+        }
+        .eyebrow {
+            text-transform: uppercase;
+            letter-spacing: .22em;
+            font-size: .68rem;
+            color: var(--clay);
+            margin-bottom: .25rem;
+            font-weight: 700;
+        }
+        .hero-title { font-size: 1.9rem; letter-spacing: -.04em; }
+        .hero-title em {
+            display: block;
+            font-family: var(--font-script);
+            font-style: normal;
+            font-size: .58em;
+            color: var(--clay);
+            margin-top: .08rem;
+            letter-spacing: 0;
+            font-weight: 400;
+        }
+
+        .embroidery {
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+            width: 64px;
+            height: 64px;
+            color: var(--terracotta);
+            opacity: .38;
+            pointer-events: none;
+            animation: float 9s ease-in-out infinite;
+        }
+        .embroidery-bloom { transform-origin: 44px 44px; animation: bloom 26s linear infinite; }
+
+        .sewing-path {
+            width: 100%;
+            height: 28px;
+            color: var(--terracotta);
+            opacity: .55;
+            pointer-events: none;
+            overflow: visible;
+            margin-top: .15rem;
+        }
+        .sewing-stitch { animation: stitch-float 3.2s linear infinite; }
+
+        .container {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 0 1.15rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .section-title {
+            font-size: 1.7rem;
+            margin-bottom: 1.1rem;
+            display: inline-block;
+        }
+        .section-title:after {
+            content: "";
+            display: block;
+            width: 4.8rem;
+            margin-top: .4rem;
+            border-bottom: 2px dashed rgba(224, 112, 48, .5);
+        }
+        .script {
+            font-family: var(--font-script);
+            font-size: 1.45rem;
+            color: var(--clay);
+        }
+
+        /* --- КАРТОЧКА В АФИШЕ (КАК НА ПРИКРЕПЛЕННОМ СКРИНШОТЕ) --- */
+        .event-list {
+            display: grid;
+            gap: 1.15rem;
+        }
+        .event-row {
+            position: relative;
+            display: grid;
+            grid-template-columns: 185px 1fr;
+            background: var(--white);
+            border-radius: var(--radius);
+            border: 2px dashed rgba(224, 112, 48, .24);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform .3s ease, box-shadow .3s ease;
+            text-align: left;
+            width: 100%;
+            padding: 0;
+            color: inherit;
+        }
+        .event-row:hover {
+            transform: translateY(-5px) rotate(-.25deg);
+            box-shadow: 0 18px 34px rgba(224, 112, 48, .2);
+        }
+        .event-row .event-art {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 185px;
+            overflow: hidden;
+            background: linear-gradient(155deg, #FFF6E4, #F0C089);
+        }
+        .event-row .event-cover-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .event-row .event-art-svg {
+            width: 100%;
+            height: 100%;
+            min-height: 185px;
+            display: block;
+        }
+        .event-logo-mark {
+            position: absolute;
+            right: 12px;
+            bottom: 12px;
+            width: 52px;
+            height: 52px;
+            pointer-events: none;
+            filter: drop-shadow(0 6px 10px rgba(196, 90, 34, .22));
+            transition: transform .35s ease;
+            z-index: 2;
+        }
+        .event-row:hover .event-logo-mark {
+            transform: translateY(-4px);
+        }
+        .event-logo-mark img {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            background: var(--white);
+        }
+        .event-row-body {
+            padding: 1.25rem 1.4rem 1.3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+        .event-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: .45rem .65rem;
+            font-size: .82rem;
+            color: var(--muted);
+            margin-bottom: .5rem;
+        }
+        .chip {
+            border-radius: 999px;
+            padding: .18rem .68rem;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            background: #f4d56a78;
+            color: var(--clay);
+        }
+        .chip-craft { background: #e0703026; color: var(--clay); }
+        .chip-social { background: #f4d56a85; color: var(--clay); }
+
+        .event-row h2 {
+            font-size: 1.42rem;
+            margin-bottom: .45rem;
+            color: var(--ink);
+        }
+        .event-row-excerpt {
+            color: var(--muted);
+            font-size: .92rem;
+            line-height: 1.5;
+            margin: 0 0 .85rem;
+        }
+        .event-row-foot {
+            margin: auto 0 0 0;
+            font-size: .88rem;
+            font-weight: 600;
+            color: var(--ink);
+        }
+
+        /* Адаптив карточки для узких экранов смартфонов */
+        @media (max-width: 520px) {
+            .event-row {
+                grid-template-columns: 1fr;
+            }
+            .event-row .event-art,
+            .event-row .event-art-svg {
+                height: 155px;
+                min-height: 155px;
+            }
+            .event-row-body {
+                padding: 1.15rem 1.25rem 1.3rem;
+            }
+        }
+
+        /* --- СТРАНИЦА ПОДРОБНОСТЕЙ СОБЫТИЯ И ЗАПИСИ --- */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            margin-bottom: .9rem;
+            color: var(--clay);
+            font-weight: 700;
+            font-size: .9rem;
+            background: none;
+            border: 0;
+            border-bottom: 1px dashed var(--blush);
+            padding: 0 0 2px 0;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .detail-hero-art {
+            position: relative;
+            height: 220px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 2px dashed rgba(224, 112, 48, .25);
+            margin-bottom: 1.2rem;
+            background: linear-gradient(155deg, #FFF6E4, #F0C089);
+        }
+        .detail-hero-art .event-art-svg,
+        .detail-hero-art .event-cover-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .studio-card {
+            position: relative;
+            background: var(--white);
+            border-radius: var(--radius);
+            padding: 1.45rem 1.35rem 2.2rem;
+            margin-bottom: 1.25rem;
+            box-shadow: var(--shadow);
+            border: 2px dashed rgba(224, 112, 48, .22);
+            overflow: hidden;
+        }
+        .studio-card.warm-grad {
+            background: linear-gradient(165deg, #fffaf1, #fde3b8);
+        }
+
+        .event-facts-list {
+            margin: 0 0 1rem;
+        }
+        .event-facts-list div {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: .6rem 0;
+            border-bottom: 1px dashed rgba(224, 112, 48, .28);
+            font-size: .92rem;
+        }
+        .event-facts-list dt { color: var(--muted); }
+        .event-facts-list dd { margin: 0; text-align: right; font-weight: 700; color: var(--ink); }
+
+        .map-wrapper {
+            border-radius: 24px;
+            overflow: hidden;
+            border: 2px dashed rgba(224, 112, 48, .32);
+            margin: .75rem 0 .5rem;
+            background: var(--paper);
+        }
+        .map-box {
+            height: 190px;
+            width: 100%;
+            z-index: 1;
+            filter: sepia(14%) saturate(92%);
+        }
+
+        .form-grid { display: grid; gap: .9rem; }
+        label.studio-label {
+            display: grid;
+            gap: .3rem;
+            font-size: .86rem;
+            font-weight: 600;
+            color: var(--muted);
+        }
+        label.studio-label .req { color: var(--terracotta); margin-right: 2px; }
+        input[type="text"],
+        input[type="tel"],
+        input[type="email"],
+        input[type="number"],
+        input[type="datetime-local"],
+        textarea,
+        select {
+            width: 100%;
+            font: inherit;
+            font-size: .93rem;
+            color: var(--ink);
+            border: 1.5px solid rgba(224, 112, 48, .28);
+            background: var(--white);
+            border-radius: 22px;
+            padding: .7rem .95rem;
+            outline: none;
+        }
+        input:focus, textarea:focus, select:focus {
+            border-color: var(--terracotta);
+            box-shadow: 0 0 0 3px rgba(224, 112, 48, .15);
+        }
+        .hint { color: var(--muted); font-size: .76rem; }
+
+        .legal-box {
+            background: #f8eed885;
+            border: 1px dashed rgba(224, 112, 48, .38);
+            border-radius: 24px;
+            padding: .95rem 1.1rem;
+            margin: .85rem 0;
+        }
+        .legal-text { font-size: .8rem; color: var(--muted); line-height: 1.48; margin-bottom: .65rem; }
+        .consent-pill {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            background: var(--white);
+            border: 1.5px solid rgba(224, 112, 48, .35);
+            border-radius: 999px;
+            padding: .58rem 1rem;
+            cursor: pointer;
+            font-size: .86rem;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .consent-pill input { width: 18px; height: 18px; accent-color: var(--terracotta); margin: 0; }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            padding: .88rem 1.25rem;
+            border-radius: 999px;
+            border: 1px solid transparent;
+            font-family: var(--font-sans);
+            font-weight: 700;
+            font-size: .93rem;
+            cursor: pointer;
+            transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+        .btn-primary {
+            background: var(--terracotta);
+            color: var(--white);
+            box-shadow: 0 4px #c45a2259;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 7px #c45a2247; }
+        .btn-ghost {
+            border: 1px solid rgba(224, 112, 48, .32);
+            background: #fffaf1b3;
+            color: var(--clay);
+        }
+        .btn-danger {
+            background: transparent;
+            border: 1px solid rgba(196, 90, 34, .4);
+            color: var(--clay);
+        }
+        .btn-sm {
+            width: auto;
+            padding: .4rem .82rem;
+            font-size: .78rem;
+        }
+
+        /* Кабинет администратора */
+        .admin-event-selector {
+            display: grid;
+            gap: .65rem;
+            margin-bottom: 1.15rem;
+        }
+        .admin-event-pill {
+            width: 100%;
+            text-align: left;
+            border: 1.5px solid rgba(224, 112, 48, .22);
+            background: var(--white);
+            border-radius: 26px;
+            padding: .85rem 1.05rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: .75rem;
+            cursor: pointer;
+            font: inherit;
+            color: inherit;
+            transition: all .2s ease;
+        }
+        .admin-event-pill.is-active {
+            border-color: var(--terracotta);
+            background: linear-gradient(165deg, #fffaf1, #fde3b8);
+            box-shadow: 0 8px 20px #e0703026;
+        }
+        .guest-card {
+            background: #fffaf1;
+            border: 1px dashed rgba(224, 112, 48, .35);
+            border-radius: 22px;
+            padding: .85rem 1rem;
+            margin-bottom: .65rem;
+        }
+        .guest-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .4rem;
+            margin-top: .55rem;
+        }
+        .stats-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: .45rem;
+            margin: .4rem 0 .85rem;
+        }
+
+        .card-thread {
+            position: absolute;
+            left: 8%;
+            right: 8%;
+            bottom: 8px;
+            width: 84%;
+            height: 30px;
+            color: var(--terracotta);
+            opacity: .45;
+            pointer-events: none;
+        }
+        .card-thread path { animation: stitch-float 3.2s linear infinite; }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 24px);
+            max-width: 520px;
+            background: #fffaf1eb;
+            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(16px);
+            border: 2px dashed rgba(224, 112, 48, .32);
+            border-radius: 999px;
+            padding: 6px;
+            display: flex;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            z-index: 999;
+        }
+        .nav-tab {
+            flex: 1;
+            border: 0;
+            background: transparent;
+            color: var(--muted);
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: .82rem;
+            padding: .62rem .4rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all .25s ease;
+        }
+        .nav-tab.active {
+            background: var(--terracotta);
+            color: var(--white);
+            box-shadow: 0 3px #c45a2259;
+        }
+
+        .tab-pane { display: none; animation: fadeUp .38s ease both; }
+        .tab-pane.active { display: block; }
+
+        .notice-banner {
+            display: none;
+            background: linear-gradient(165deg, #fffaf1, #fde3b8);
+            border: 2px dashed var(--terracotta);
+            color: var(--ink);
+            padding: .9rem 1.15rem;
+            border-radius: 26px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: .9rem;
+            box-shadow: var(--shadow);
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: none; }
+        }
+        @keyframes stitch-float { to { stroke-dashoffset: -32; } }
+        @keyframes float {
+            0%, to { transform: translateY(0); }
+            50% { transform: translateY(10px); }
+        }
+        @keyframes logo-bob {
+            0%, to { transform: translateY(0) rotate(-2deg); }
+            50% { transform: translateY(-6px) rotate(2deg); }
+        }
+        @keyframes bloom { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <svg class="embroidery" viewBox="0 0 88 88" aria-hidden="true">
+        <g class="embroidery-bloom" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3.2 4.2" stroke-linecap="round">
+            <ellipse cx="44" cy="20" rx="9" ry="16"></ellipse>
+            <ellipse cx="44" cy="68" rx="9" ry="16"></ellipse>
+            <ellipse cx="20" cy="44" rx="16" ry="9"></ellipse>
+            <ellipse cx="68" cy="44" rx="16" ry="9"></ellipse>
+        </g>
+        <circle cx="44" cy="44" r="5.5" fill="#f4d56a" stroke="#c45a22" stroke-width="1.15" stroke-dasharray="2.4 3"></circle>
+    </svg>
+
+    <div class="header-brand">
+        <img class="logo-img" src="https://greydushy.com/logo.png" alt="Грея душу" />
+        <div>
+            <p class="eyebrow">студия дизайна</p>
+            <h1 class="hero-title">
+                Грея душу
+                <em id="userGreeting">согреваем творчеством</em>
+            </h1>
+        </div>
+    </div>
+
+    <svg class="sewing-path" viewBox="0 0 600 32" preserveAspectRatio="none" aria-hidden="true">
+        <path class="sewing-stitch" d="M0 18 C 120 4, 240 30, 360 12 S 500 28, 600 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 9"></path>
+    </svg>
+</header>
+
+<main class="container">
+    <div id="alertBox" class="notice-banner"></div>
+
+    <!-- ВКЛАДКА 1: ЛЕНТА АФИШИ (КОМПАКТНЫЕ КАРТОЧКИ КАК НА СКРИНШОТЕ) -->
+    <section id="tab-events" class="tab-pane active">
+        <p class="eyebrow">афиша встреч</p>
+        <h2 class="section-title">Мастер-классы</h2>
+        <div id="eventsList" class="event-list"></div>
+    </section>
+
+    <!-- ПОДРОБНАЯ СТРАНИЦА ВЫБРАННОГО СОБЫТИЯ (ОТКРЫВАЕТСЯ ПО КЛИКУ НА КАРТОЧКУ) -->
+    <section id="tab-event-detail" class="tab-pane">
+        <button type="button" class="back-link" onclick="closeEventDetail()">← все мастер-классы</button>
+        <div id="eventDetailContent"></div>
+    </section>
+
+    <!-- ВКЛАДКА 2: МОИ ЗАПИСИ -->
+    <section id="tab-my" class="tab-pane">
+        <p class="eyebrow">личный кабинет</p>
+        <h2 class="section-title">Мои записи</h2>
+        <div id="myRegistrationsList"></div>
+    </section>
+
+    <!-- ВКЛАДКА 3: АНКЕТА ГОСТЯ -->
+    <section id="tab-profile" class="tab-pane">
+        <p class="eyebrow">знакомство</p>
+        <h2 class="section-title">Анкета гостя</h2>
+
+        <div class="studio-card warm-grad">
+            <p class="script" style="margin-bottom:.3rem;">заполняется один раз</p>
+            <p style="font-size:.88rem; color:var(--muted); margin-bottom:1.1rem;">
+                Сохраните свои контактные данные — и записывайтесь на любые наши мастер-классы в один клик.
+            </p>
+
+            <form id="profileForm" class="form-grid" onsubmit="saveProfile(event)">
+                <label class="studio-label">
+                    <span><span class="req">*</span>Фамилия</span>
+                    <input type="text" id="p_last_name" required />
+                </label>
+                <label class="studio-label">
+                    <span><span class="req">*</span>Имя</span>
+                    <input type="text" id="p_first_name" required />
+                </label>
+                <label class="studio-label">
+                    <span>Отчество</span>
+                    <input type="text" id="p_patronymic" />
+                    <span class="hint">При наличии</span>
+                </label>
+                <label class="studio-label">
+                    <span><span class="req">*</span>Телефон</span>
+                    <input type="tel" id="p_phone" placeholder="+7 (999) 000-00-00" required />
+                </label>
+                <label class="studio-label">
+                    <span><span class="req">*</span>Почта</span>
+                    <input type="email" id="p_email" placeholder="hello@greydushy.com" required />
+                </label>
+                <label class="studio-label">
+                    <span><span class="req">*</span>Профиль ВК</span>
+                    <input type="text" id="p_vk" placeholder="https://vk.com/..." required />
+                    <span class="hint">Ссылка (никнейм) на твой профиль в ВК</span>
+                </label>
+
+                <div class="legal-box">
+                    <div class="legal-text">
+                        <strong style="color:var(--ink);"><span style="color:var(--terracotta);">*</span> Обработка персональных данных</strong><br>
+                        Политика: <a href="https://greydushy.com/privacy.pdf" target="_blank">greydushy.com/privacy.pdf</a><br>
+                        Согласие: <a href="https://greydushy.com/privacy_agreement.pdf" target="_blank">greydushy.com/privacy_agreement.pdf</a><br><br>
+                        Я ознакомлен(а) и согласен(на) с Политикой обработки персональных данных Студии дизайна «Грея душу», даю своё добровольное согласие на обработку моих персональных данных.
+                    </div>
+                    <label class="consent-pill">
+                        <input type="checkbox" id="p_pdn" required />
+                        <span>Ознакомлен(а) и согласен(на)</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Сохранить анкету</button>
+            </form>
+
+            <svg class="card-thread" viewBox="0 0 320 48" aria-hidden="true">
+                <path d="M8 28 C 70 8, 120 42, 168 22 S 270 8, 312 30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="5 8"></path>
+            </svg>
+        </div>
+    </section>
+
+    <!-- ВКЛАДКА 4: КАБИНЕТ АДМИНИСТРАТОРА -->
+    <section id="tab-admin" class="tab-pane">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.6rem;">
+            <div>
+                <p class="eyebrow" style="margin-bottom:.1rem;">кабинет студии</p>
+                <h2 class="section-title" style="margin-bottom:.4rem;">Афиша и участники</h2>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="openCreateEventMode()">+ Новая встреча</button>
+        </div>
+
+        <!-- Селектор всех событий -->
+        <div id="adminEventsSelector" class="admin-event-selector"></div>
+
+        <!-- Переключатель режима внутри выбранной встречи -->
+        <div id="adminSubTabs" style="display:none; gap:.5rem; margin-bottom:1rem;">
+            <button type="button" id="subTabGuestsBtn" class="btn btn-primary btn-sm" style="flex:1;" onclick="switchAdminMode('guests')">👥 Участники встречи</button>
+            <button type="button" id="subTabEditBtn" class="btn btn-ghost btn-sm" style="flex:1;" onclick="switchAdminMode('form')">✏️ Редактировать встречу</button>
+        </div>
+
+        <!-- Панель отслеживания участников -->
+        <div id="adminGuestsPanel" class="studio-card" style="display:none;">
+            <p class="script" id="adminSelectedEventTitle" style="margin:0;">участники</p>
+            <div id="adminEventStatsBar" class="stats-bar"></div>
+
+            <input type="text" id="guestSearchInput" placeholder="Поиск по фамилии, имени или телефону..." oninput="renderAdminGuestsList()" style="margin-bottom:.85rem;" />
+
+            <div id="adminGuestsContainer"></div>
+
+            <svg class="card-thread" viewBox="0 0 320 48" aria-hidden="true">
+                <path d="M8 28 C 70 8, 120 42, 168 22 S 270 8, 312 30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="5 8"></path>
+            </svg>
+        </div>
+
+        <!-- Форма создания и редактирования события (без "Что входит", со свободным форматом) -->
+        <div id="adminFormPanel" class="studio-card">
+            <p class="script" id="adminFormHeader" style="margin-bottom:.6rem;">новая встреча в афише</p>
+
+            <form id="createEventForm" class="form-grid" onsubmit="saveEventFromAdmin(event)">
+                <input type="hidden" id="ev_editing_id" value="" />
+
+                <label class="studio-label">
+                    <span><span class="req">*</span>Название встречи</span>
+                    <input type="text" id="ev_title" placeholder="Мастер-класс «Тюмень в лоскутках»" required />
+                </label>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:.65rem;">
+                    <label class="studio-label">
+                        <span><span class="req">*</span>Формат события</span>
+                        <input type="text" id="ev_kind" placeholder="Социальный / Творческий / Презентация" value="Социальный" required />
+                    </label>
+                    <label class="studio-label">
+                        <span>Стоимость</span>
+                        <input type="text" id="ev_price" placeholder="Бесплатно / 1 500 ₽" value="Бесплатно" />
+                    </label>
+                </div>
+
+                <!-- Загрузка обложки -->
+                <div class="studio-label">
+                    <span>Обложка мероприятия (необязательно — иначе будет фирменный узор)</span>
+                    <div style="display:flex; gap:.5rem; align-items:center;">
+                        <input type="text" id="ev_cover_url" placeholder="Загрузите фото или вставьте ссылку" />
+                        <label class="btn btn-ghost btn-sm" style="cursor:pointer; flex-shrink:0; margin:0;">
+                            📷 Фото
+                            <input type="file" id="ev_cover_file" accept="image/*" style="display:none;" onchange="uploadCoverFile(this)" />
+                        </label>
+                    </div>
+                    <div id="coverPreviewBox" style="display:none; margin-top:.4rem;">
+                        <img id="coverPreviewImg" src="" alt="Превью" style="width:100%; height:130px; object-fit:cover; border-radius:18px;" />
+                    </div>
+                </div>
+
+                <label class="studio-label">
+                    <span>Краткое описание для карточки в афише</span>
+                    <textarea id="ev_excerpt" rows="2" placeholder="Узнай историю и легенды Тюмени через рукоделие! Вышей один из городских символов..."></textarea>
+                </label>
+
+                <label class="studio-label">
+                    <span><span class="req">*</span>Полное описание (откроется внутри страницы события)</span>
+                    <textarea id="ev_desc" rows="4" placeholder="Подробный рассказ о том, что ждет гостей на встрече..." required></textarea>
+                </label>
+
+                <div style="display:grid; grid-template-columns: 1fr .65fr .55fr; gap:.55rem;">
+                    <label class="studio-label">
+                        <span><span class="req">*</span>Дата и время</span>
+                        <input type="datetime-local" id="ev_starts" required />
+                    </label>
+                    <label class="studio-label">
+                        <span>Длительность</span>
+                        <input type="text" id="ev_duration" placeholder="3 часа" value="3 часа" />
+                    </label>
+                    <label class="studio-label">
+                        <span><span class="req">*</span>Мест</span>
+                        <input type="number" id="ev_seats" value="12" min="1" required />
+                    </label>
+                </div>
+
+                <label class="studio-label">
+                    <span><span class="req">*</span>Адрес проведения</span>
+                    <div style="display:flex; gap:.5rem;">
+                        <input type="text" id="ev_address" value="г. Тюмень, ул. Ванцетти, 1" required />
+                        <button type="button" class="btn btn-ghost btn-sm" onclick="geocodeAdminAddress()">Найти</button>
+                    </div>
+                </label>
+
+                <div class="map-wrapper">
+                    <iframe
+                        id="adminYandexMap"
+                        src="https://yandex.ru/map-widget/v1/?ll=65.5619%2C57.1553&z=16&pt=65.5619,57.1553,pm2orgm"
+                        width="100%"
+                        height="195"
+                        frameborder="0"
+                        allowfullscreen="true"
+                        style="display:block; border:0; filter: sepia(12%) saturate(95%);">
+                    </iframe>
+                </div>
+                <input type="hidden" id="ev_lat" value="57.1553" />
+                <input type="hidden" id="ev_lon" value="65.5619" />
+
+                <label class="studio-label">
+                    <span>Ориентир / этаж / вход</span>
+                    <input type="text" id="ev_details" placeholder="Студия дизайна «Грея душу», 2 этаж" />
+                </label>
+
+                <label class="consent-pill">
+                    <input type="checkbox" id="ev_safety" checked />
+                    <span>Требовать согласие с Техникой безопасности</span>
+                </label>
+
+                <div style="display:flex; gap:.6rem; flex-wrap:wrap;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Сохранить в афишу</button>
+                    <button type="button" id="deleteEventBtn" class="btn btn-danger" style="width:auto; display:none;" onclick="deleteCurrentEvent()">Удалить</button>
+                </div>
+            </form>
+
+            <svg class="card-thread" viewBox="0 0 320 48" aria-hidden="true">
+                <path d="M8 28 C 70 8, 120 42, 168 22 S 270 8, 312 30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="5 8"></path>
+            </svg>
+        </div>
+    </section>
+</main>
+
+<nav class="bottom-nav">
+    <button class="nav-tab active" onclick="switchTab('events', this)">Афиша</button>
+    <button class="nav-tab" onclick="switchTab('my', this)">Мои записи</button>
+    <button class="nav-tab" onclick="switchTab('profile', this)">Анкета</button>
+    <button class="nav-tab" id="adminNavBtn" style="display:none;" onclick="switchTab('admin', this)">Кабинет</button>
+</nav>
+
+<script>
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    if (tg) { tg.expand(); }
+
+    // Если открыто в браузере вне Telegram — сохраняем уникальный ID браузера в localStorage
+    function getBrowserDeviceId() {
+        let devId = localStorage.getItem('gd_device_id');
+        if (!devId) {
+            devId = 'web_' + Math.random().toString(36).substring(2, 11);
+            localStorage.setItem('gd_device_id', devId);
+        }
+        return devId;
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentPlatform = urlParams.get('platform') || 'tg';
+    const externalUserId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user)
+        ? String(tg.initDataUnsafe.user.id)
+        : (urlParams.get('uid') || getBrowserDeviceId());
+
+    let currentUser = null;
+    let pendingEventIdAfterOnboarding = null;
+    let cachedEvents = [];
+    let currentDetailEventId = null;
+    let selectedAdminEventId = null;
+    let cachedAdminGuests = [];
+    let adminMapInstance = null;
+    let adminMarker = null;
+
+    const STATUS_LABELS = {
+        registered: '✅ Записан',
+        confirmed: '🔥 Подтвержден',
+        waitlist: '⏳ В очереди',
+        attended: '🎉 Пришел',
+        cancelled: '❌ Отменен'
+    };
+
+    function showAlert(msg) {
+        const box = document.getElementById('alertBox');
+        box.style.display = 'block';
+        box.innerText = msg;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        setTimeout(() => { box.style.display = 'none'; }, 5000);
+    }
+
+    function switchTab(tabName, btn) {
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-' + tabName).classList.add('active');
+        if (btn) btn.classList.add('active');
+
+        if (tabName === 'events') loadEvents();
+        if (tabName === 'my') loadMyRegistrations();
+        if (tabName === 'admin') {
+            initAdminMap();
+            loadAdminDashboard();
+        }
+    }
+
+    function renderArtBlock(ev, extraClass = 'event-art') {
+        const isSocial = (ev.kind || '').toLowerCase().includes('соц');
+        const c1 = isSocial ? '#F0C089' : '#E8A15A';
+        const c2 = isSocial ? '#FFF6E4' : '#F8E8C8';
+        const stroke = isSocial ? '#E07030' : '#C45A22';
+
+        if (ev.cover_url) {
+            return `
+            <div class="${extraClass}">
+                <img src="${ev.cover_url}" class="event-cover-img" alt="" />
+                <span class="event-logo-mark">
+                    <img src="https://greydushy.com/logo.png" alt="" />
+                </span>
+            </div>`;
+        }
+
+        return `
+        <div class="${extraClass}" style="background: linear-gradient(155deg, ${c2}, ${c1});">
+            <svg viewBox="0 0 320 220" class="event-art-svg" preserveAspectRatio="xMidYMid slice">
+                <g fill="none" stroke="${stroke}" stroke-width="1.6" stroke-dasharray="3 4" opacity="0.45">
+                    <ellipse cx="58" cy="42" rx="9" ry="15"></ellipse>
+                    <ellipse cx="58" cy="72" rx="9" ry="15"></ellipse>
+                    <ellipse cx="40" cy="57" rx="15" ry="9"></ellipse>
+                    <ellipse cx="76" cy="57" rx="15" ry="9"></ellipse>
+                    <circle cx="58" cy="57" r="4"></circle>
+                    <ellipse cx="268" cy="46" rx="8" ry="13"></ellipse>
+                    <ellipse cx="268" cy="72" rx="8" ry="13"></ellipse>
+                    <ellipse cx="250" cy="59" rx="13" ry="8"></ellipse>
+                    <ellipse cx="286" cy="59" rx="13" ry="8"></ellipse>
+                </g>
+                <rect x="108" y="34" width="96" height="72" rx="28" fill="rgba(255,250,241,0.35)" stroke="${stroke}" stroke-width="2" stroke-dasharray="5 6" opacity="0.7"></rect>
+                <circle cx="48" cy="168" r="18" fill="none" stroke="${stroke}" stroke-width="1.8" stroke-dasharray="4 5" opacity="0.55"></circle>
+            </svg>
+            <span class="event-logo-mark">
+                <img src="https://greydushy.com/logo.png" alt="" />
+            </span>
+        </div>`;
+    }
+
+    async function loadUserProfile() {
+        try {
+            const res = await fetch(`/api/users/me/${currentPlatform}/${externalUserId}`);
+            if (res.ok) {
+                currentUser = await res.json();
+                document.getElementById('userGreeting').innerText = `привет, ${currentUser.first_name}!`;
+                document.getElementById('p_last_name').value = currentUser.last_name;
+                document.getElementById('p_first_name').value = currentUser.first_name;
+                document.getElementById('p_patronymic').value = currentUser.patronymic || '';
+                document.getElementById('p_phone').value = currentUser.phone;
+                document.getElementById('p_email').value = currentUser.email;
+                document.getElementById('p_vk').value = currentUser.vk_profile;
+                document.getElementById('p_pdn').checked = true;
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function saveProfile(e) {
+        e.preventDefault();
+        const payload = {
+            last_name: document.getElementById('p_last_name').value.trim(),
+            first_name: document.getElementById('p_first_name').value.trim(),
+            patronymic: document.getElementById('p_patronymic').value.trim() || null,
+            phone: document.getElementById('p_phone').value.trim(),
+            email: document.getElementById('p_email').value.trim(),
+            vk_profile: document.getElementById('p_vk').value.trim(),
+            pdn_accepted: document.getElementById('p_pdn').checked,
+            platform: currentPlatform,
+            external_user_id: externalUserId,
+            username: (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) ? tg.initDataUnsafe.user.username : null
+        };
+
+        const res = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            currentUser = await res.json();
+            showAlert('Анкета сохранена!');
+            await loadUserProfile();
+            if (pendingEventIdAfterOnboarding) {
+                const evId = pendingEventIdAfterOnboarding;
+                pendingEventIdAfterOnboarding = null;
+                await bookEvent(evId, true);
+                openEventDetail(evId);
+            }
+        } else {
+            const err = await res.json();
+            showAlert(err.detail || 'Проверьте заполнение полей');
+        }
+    }
+
+    // 1. Лента Афиши
+    async function loadEvents() {
+        const container = document.getElementById('eventsList');
+        const res = await fetch('/api/events');
+        cachedEvents = await res.json();
+
+        if (!cachedEvents.length) {
+            container.innerHTML = `
+                <div class="studio-card" style="text-align:center;">
+                    <img src="https://greydushy.com/logo.png" alt="" style="width:92px; height:92px; border-radius:50%; margin-bottom:.5rem;" />
+                    <p class="script">пока в афише тихо</p>
+                    <p style="color:var(--muted); font-size:.9rem;">Добавьте первую встречу во вкладке «Кабинет».</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = cachedEvents.map(ev => {
+            const dt = new Date(ev.starts_at);
+            const dateStr = dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }).replace(' г.', '');
+            const timeStr = dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            const shortText = ev.excerpt || (ev.description.length > 140 ? ev.description.slice(0, 140) + '…' : ev.description);
+            const priceLabel = ev.price || 'Бесплатно';
+
+            return `
+            <article class="event-row" onclick="openEventDetail(${ev.id})">
+                ${renderArtBlock(ev, 'event-art')}
+                <div class="event-row-body">
+                    <div class="event-meta">
+                        <span class="chip">${ev.kind || 'Мастер-класс'}</span>
+                        <span>${dateStr} · ${timeStr}${ev.duration ? ' · ' + ev.duration : ''}</span>
+                    </div>
+                    <h2>${ev.title}</h2>
+                    <p class="event-row-excerpt">${shortText}</p>
+                    <p class="event-row-foot">${ev.address} · ${priceLabel}</p>
+                </div>
+            </article>`;
+        }).join('');
+    }
+
+    // 2. Подробная страница события с встроенной Яндекс.Картой и согласием с ТБ
+    function openEventDetail(eventId) {
+        const ev = cachedEvents.find(x => x.id === eventId);
+        if (!ev) return;
+        currentDetailEventId = ev.id;
+
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-event-detail').classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        const dt = new Date(ev.starts_at);
+        const dateStr = dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }).replace(' г.', '');
+        const timeStr = dt.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+        const lat = ev.latitude || 57.1553;
+        const lon = ev.longitude || 65.5619;
+        // Нативный виджет Яндекс Карт с оранжевой меткой (pm2orgm) прямо по координатам встречи
+        const yandexWidgetUrl = `https://yandex.ru/map-widget/v1/?ll=${lon}%2C${lat}&z=16&pt=${lon},${lat},pm2orgm`;
+        const yandexRouteUrl = `https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto`;
+        const twoGisUrl = `https://2gis.ru/tyumen/search/${encodeURIComponent(ev.address)}`;
+
+        const box = document.getElementById('eventDetailContent');
+        box.innerHTML = `
+            ${renderArtBlock(ev, 'detail-hero-art')}
+
+            <div class="studio-card">
+                <p class="eyebrow" style="margin-bottom:.35rem;">${ev.kind || 'мастер-класс'}</p>
+                <h2 style="font-size:1.75rem; margin-bottom:.65rem;">${ev.title}</h2>
+                ${ev.excerpt ? `<p style="font-size:1.02rem; font-weight:600; color:var(--ink);">${ev.excerpt}</p>` : ''}
+                <p style="color:var(--muted); font-size:.95rem; white-space:pre-line;">${ev.description}</p>
+
+                <dl class="event-facts-list" style="margin-top:1.1rem;">
+                    <div>
+                        <dt>Когда</dt>
+                        <dd>${dateStr}, ${timeStr}</dd>
+                    </div>
+                    ${ev.duration ? `
+                    <div>
+                        <dt>Длительность</dt>
+                        <dd>${ev.duration}</dd>
+                    </div>` : ''}
+                    <div>
+                        <dt>Где</dt>
+                        <dd>${ev.address}${ev.location_details ? ` (${ev.location_details})` : ''}</dd>
+                    </div>
+                    <div>
+                        <dt>Свободно мест</dt>
+                        <dd>${ev.available_seats} из ${ev.max_seats}</dd>
+                    </div>
+                    <div>
+                        <dt>Стоимость</dt>
+                        <dd>${ev.price || 'Бесплатно'}</dd>
+                    </div>
+                </dl>
+
+                <!-- ИНТЕРАКТИВНАЯ ЯНДЕКС КАРТА (без лишних кнопок снизу) -->
+                <div class="map-wrapper" style="margin-bottom: 1rem;">
+                    <iframe
+                        src="${yandexWidgetUrl}"
+                        width="100%"
+                        height="210"
+                        frameborder="0"
+                        allowfullscreen="true"
+                        style="display:block; border:0; filter: sepia(12%) saturate(95%);">
+                    </iframe>
+                </div>
+
+                ${ev.requires_safety_ack ? `
+                <div class="legal-box">
+                    <div class="legal-text">
+                        <strong style="color:var(--ink);"><span style="color:var(--terracotta);">*</span> Техника безопасности</strong><br>
+                        Соглашение: <a href="https://greydushy.com/safety_precautions.pdf" target="_blank">greydushy.com/safety_precautions.pdf</a><br><br>
+                        Настоящим я подтверждаю, что внимательно прочитал(а) и полностью согласен(на) с Правилами техники безопасности Студии дизайна «Грея душу». Я осознаю, что на мастер-классе используются колющие и режущие инструменты, требующие осторожности.
+                    </div>
+                    <label class="consent-pill">
+                        <input type="checkbox" id="detail-safety-chk" />
+                        <span>Ознакомлен(а) и согласен(на)</span>
+                    </label>
+                </div>` : ''}
+
+                <button type="button" class="btn btn-primary" onclick="handleBookFromDetail(${ev.id}, ${ev.requires_safety_ack})">
+                    ${ev.available_seats > 0 ? 'Записаться на встречу' : 'Встать в лист ожидания'}
+                </button>
+
+                <svg class="card-thread" viewBox="0 0 320 48" aria-hidden="true">
+                    <path d="M8 28 C 70 8, 120 42, 168 22 S 270 8, 312 30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="5 8"></path>
+                </svg>
+            </div>
+        `;
+    }
+
+    function closeEventDetail() {
+        switchTab('events', document.querySelectorAll('.nav-tab')[0]);
+    }
+
+    async function handleBookFromDetail(eventId, requiresSafety) {
+        if (requiresSafety) {
+            const chk = document.getElementById('detail-safety-chk');
+            if (!chk || !chk.checked) {
+                showAlert('Пожалуйста, отметьте согласие с правилами техники безопасности');
+                return;
+            }
+        }
+        if (!currentUser) {
+            pendingEventIdAfterOnboarding = eventId;
+            showAlert('Заполните анкету гостя один раз — и запись сразу завершится!');
+            switchTab('profile', document.querySelectorAll('.nav-tab')[2]);
+            return;
+        }
+        await bookEvent(eventId, true);
+    }
+
+    async function bookEvent(eventId, safetyAccepted) {
+        const res = await fetch('/api/registrations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                event_id: eventId,
+                safety_accepted: safetyAccepted
+            })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            showAlert(data.message);
+            await loadEvents();
+            if (currentDetailEventId === eventId) {
+                openEventDetail(eventId);
+            }
+        } else {
+            showAlert(data.detail || 'Не удалось оформить запись');
+        }
+    }
+
+    async function loadMyRegistrations() {
+        const box = document.getElementById('myRegistrationsList');
+        if (!currentUser) {
+            box.innerHTML = '<div class="studio-card"><p class="script">сначала заполните анкету</p><p style="color:var(--muted); margin:0;">Перейдите во вкладку «Анкета», чтобы видеть свои записи.</p></div>';
+            return;
+        }
+        const res = await fetch(`/api/users/${currentUser.id}/registrations`);
+        const items = await res.json();
+        if (!items.length) {
+            box.innerHTML = '<div class="studio-card"><p class="script">пока пусто</p><p style="color:var(--muted); margin:0;">Выбирайте душевную встречу в «Афише»!</p></div>';
+            return;
+        }
+        box.innerHTML = items.map(item => `
+            <div class="studio-card warm-grad">
+                <span class="chip">${STATUS_LABELS[item.status] || item.status}</span>
+                <h3 style="font-size:1.45rem; margin:.5rem 0 .35rem;">${item.event_title}</h3>
+                <p style="color:var(--muted); font-size:.9rem; margin-bottom:1rem;">📍 ${item.address}</p>
+                <button class="btn btn-danger" onclick="cancelReg(${item.registration_id})">Отменить участие</button>
+            </div>
+        `).join('');
+    }
+
+    async function cancelReg(regId) {
+        await fetch(`/api/registrations/${regId}`, { method: 'DELETE' });
+        showAlert('Запись отменена');
+        loadMyRegistrations();
+    }
+
+    // --- ЛОГИКА КАБИНЕТА АДМИНИСТРАТОРА ---
+
+    async function loadAdminDashboard() {
+        const res = await fetch('/api/events');
+        cachedEvents = await res.json();
+        const selector = document.getElementById('adminEventsSelector');
+
+        if (!cachedEvents.length) {
+            selector.innerHTML = '';
+            openCreateEventMode();
+            return;
+        }
+
+        selector.innerHTML = cachedEvents.map(ev => {
+            const dt = new Date(ev.starts_at);
+            const dateStr = dt.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+            const isSelected = selectedAdminEventId === ev.id;
+            return `
+            <button type="button" class="admin-event-pill ${isSelected ? 'is-active' : ''}" onclick="selectAdminEvent(${ev.id})">
+                <div>
+                    <span class="chip">${ev.kind || 'Событие'}</span>
+                    <div style="font-weight:800; font-size:1rem; margin-top:.25rem;">${ev.title}</div>
+                    <div style="font-size:.78rem; color:var(--muted);">${dateStr} · ${ev.address}</div>
+                </div>
+                <div style="text-align:right; flex-shrink:0;">
+                    <span class="chip chip-craft">${ev.occupied_seats} / ${ev.max_seats} мест</span>
+                </div>
+            </button>`;
+        }).join('');
+
+        if (selectedAdminEventId) {
+            await selectAdminEvent(selectedAdminEventId);
+        }
+    }
+
+    async function selectAdminEvent(eventId) {
+        selectedAdminEventId = eventId;
+        const ev = cachedEvents.find(x => x.id === eventId);
+        if (!ev) return;
+
+        document.getElementById('adminSubTabs').style.display = 'flex';
+
+        document.getElementById('ev_editing_id').value = ev.id;
+        document.getElementById('adminFormHeader').innerText = `редактирование: ${ev.title}`;
+        document.getElementById('ev_title').value = ev.title;
+        document.getElementById('ev_kind').value = ev.kind || 'Социальный';
+        document.getElementById('ev_price').value = ev.price || 'Бесплатно';
+        document.getElementById('ev_cover_url').value = ev.cover_url || '';
+        document.getElementById('ev_excerpt').value = ev.excerpt || '';
+        document.getElementById('ev_desc').value = ev.description || '';
+        document.getElementById('ev_starts').value = ev.starts_at.slice(0, 16);
+        document.getElementById('ev_duration').value = ev.duration || '3 часа';
+        document.getElementById('ev_seats').value = ev.max_seats;
+        document.getElementById('ev_address').value = ev.address;
+        document.getElementById('ev_details').value = ev.location_details || '';
+        document.getElementById('ev_lat').value = ev.latitude || 57.1553;
+        document.getElementById('ev_lon').value = ev.longitude || 65.5619;
+        document.getElementById('ev_safety').checked = ev.requires_safety_ack;
+        document.getElementById('deleteEventBtn').style.display = 'inline-flex';
+
+        if (ev.cover_url) {
+            document.getElementById('coverPreviewBox').style.display = 'block';
+            document.getElementById('coverPreviewImg').src = ev.cover_url;
+        } else {
+            document.getElementById('coverPreviewBox').style.display = 'none';
+        }
+
+        const res = await fetch(`/api/admin/registrations?event_id=${eventId}`);
+        cachedAdminGuests = await res.json();
+        document.getElementById('adminSelectedEventTitle').innerText = ev.title;
+
+        switchAdminMode('guests');
+        renderAdminGuestsList();
+    }
+
+    function openCreateEventMode() {
+        selectedAdminEventId = null;
+        document.getElementById('createEventForm').reset();
+        document.getElementById('ev_editing_id').value = '';
+        document.getElementById('adminFormHeader').innerText = 'новая встреча в афише';
+        document.getElementById('deleteEventBtn').style.display = 'none';
+        document.getElementById('coverPreviewBox').style.display = 'none';
+        document.getElementById('adminSubTabs').style.display = 'none';
+        document.getElementById('adminGuestsPanel').style.display = 'none';
+        document.getElementById('adminFormPanel').style.display = 'block';
+        initAdminMap();
+    }
+
+    function switchAdminMode(mode) {
+        const guestsPanel = document.getElementById('adminGuestsPanel');
+        const formPanel = document.getElementById('adminFormPanel');
+        const gBtn = document.getElementById('subTabGuestsBtn');
+        const eBtn = document.getElementById('subTabEditBtn');
+
+        if (mode === 'guests') {
+            guestsPanel.style.display = 'block';
+            formPanel.style.display = 'none';
+            gBtn.className = 'btn btn-primary btn-sm';
+            eBtn.className = 'btn btn-ghost btn-sm';
+        } else {
+            guestsPanel.style.display = 'none';
+            formPanel.style.display = 'block';
+            gBtn.className = 'btn btn-ghost btn-sm';
+            eBtn.className = 'btn btn-primary btn-sm';
+            initAdminMap();
+        }
+    }
+
+    function renderAdminGuestsList() {
+        const box = document.getElementById('adminGuestsContainer');
+        const statsBar = document.getElementById('adminEventStatsBar');
+        const query = (document.getElementById('guestSearchInput').value || '').toLowerCase().trim();
+
+        const regCount = cachedAdminGuests.filter(g => g.status === 'registered' || g.status === 'confirmed').length;
+        const waitCount = cachedAdminGuests.filter(g => g.status === 'waitlist').length;
+        const attCount = cachedAdminGuests.filter(g => g.status === 'attended').length;
+
+        statsBar.innerHTML = `
+            <span class="chip chip-craft">✅ В составе: ${regCount}</span>
+            <span class="chip">⏳ В очереди: ${waitCount}</span>
+            <span class="chip chip-social">🎉 Пришли: ${attCount}</span>
+        `;
+
+        const filtered = cachedAdminGuests.filter(g =>
+            `${g.last_name} ${g.first_name} ${g.phone} ${g.email}`.toLowerCase().includes(query)
+        );
+
+        if (!filtered.length) {
+            box.innerHTML = '<p style="color:var(--muted); font-size:.88rem; margin:0;">На эту встречу пока никто не записался.</p>';
+            return;
+        }
+
+        box.innerHTML = filtered.map(r => `
+            <div class="guest-card">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:.5rem;">
+                    <div>
+                        <strong style="font-size:.96rem;">${r.last_name} ${r.first_name} ${r.patronymic || ''}</strong>
+                        <div style="font-size:.82rem; color:var(--muted); margin-top:.15rem;">
+                            📱 <a href="tel:${r.phone}">${r.phone}</a> · ✉️ ${r.email}<br>
+                            ВК: <a href="${r.vk_profile.startsWith('http') ? r.vk_profile : 'https://vk.com/' + r.vk_profile}" target="_blank">${r.vk_profile}</a> ·
+                            <span>${r.email_sent ? '📨 Письмо отправлено' : '⚠️ Письмо не отправлено'}</span>
+                        </div>
+                    </div>
+                    <span class="chip">${STATUS_LABELS[r.status] || r.status}</span>
+                </div>
+                <div class="guest-actions">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="setGuestStatus(${r.registration_id}, 'attended')">🎉 Пришел</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="setGuestStatus(${r.registration_id}, 'registered')">✅ В состав</button>
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="resendEmail(${r.registration_id})">🔄 Письмо на почту</button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="setGuestStatus(${r.registration_id}, 'cancelled')">❌ Отменить</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function setGuestStatus(regId, newStatus) {
+        const res = await fetch(`/api/admin/registrations/${regId}/status/${newStatus}`, { method: 'PATCH' });
+        if (res.ok) {
+            showAlert('Статус гостя обновлен');
+            await selectAdminEvent(selectedAdminEventId);
+        }
+    }
+
+    async function resendEmail(regId) {
+        const res = await fetch(`/api/admin/registrations/${regId}/resend-email`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+            showAlert(data.message);
+            await selectAdminEvent(selectedAdminEventId);
+        } else {
+            showAlert(data.detail || 'Ошибка при отправке письма');
+        }
+    }
+
+    async function uploadCoverFile(input) {
+        if (!input.files || !input.files[0]) return;
+        const formData = new FormData();
+        formData.append('file', input.files[0]);
+
+        const res = await fetch('/api/upload-cover', { method: 'POST', body: formData });
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('ev_cover_url').value = data.cover_url;
+            document.getElementById('coverPreviewBox').style.display = 'block';
+            document.getElementById('coverPreviewImg').src = data.cover_url;
+            showAlert('Обложка загружена!');
+        }
+    }
+
+    function initAdminMap() {
+        const lat = parseFloat(document.getElementById('ev_lat').value) || 57.1553;
+        const lon = parseFloat(document.getElementById('ev_lon').value) || 65.5619;
+        const iframe = document.getElementById('adminYandexMap');
+        if (iframe) {
+            iframe.src = `https://yandex.ru/map-widget/v1/?ll=${lon}%2C${lat}&z=16&pt=${lon},${lat},pm2orgm`;
+        }
+    }
+
+    async function geocodeAdminAddress() {
+        const addr = document.getElementById('ev_address').value;
+        const res = await fetch(`/api/geocode?address=${encodeURIComponent(addr)}`);
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('ev_lat').value = data.latitude;
+            document.getElementById('ev_lon').value = data.longitude;
+            initAdminMap();
+            showAlert('Адрес отмечен на Яндекс Карте!');
+        } else {
+            showAlert('Не удалось найти этот адрес автоматически');
+        }
+    }
+
+    async function saveEventFromAdmin(e) {
+        e.preventDefault();
+        const editingId = document.getElementById('ev_editing_id').value;
+        const payload = {
+            title: document.getElementById('ev_title').value.trim(),
+            kind: document.getElementById('ev_kind').value.trim() || 'Мастер-класс',
+            price: document.getElementById('ev_price').value.trim() || 'Бесплатно',
+            cover_url: document.getElementById('ev_cover_url').value.trim() || null,
+            excerpt: document.getElementById('ev_excerpt').value.trim() || null,
+            description: document.getElementById('ev_desc').value.trim(),
+            starts_at: document.getElementById('ev_starts').value,
+            duration: document.getElementById('ev_duration').value.trim() || '2 часа',
+            max_seats: parseInt(document.getElementById('ev_seats').value),
+            address: document.getElementById('ev_address').value.trim(),
+            location_details: document.getElementById('ev_details').value.trim() || null,
+            latitude: parseFloat(document.getElementById('ev_lat').value),
+            longitude: parseFloat(document.getElementById('ev_lon').value),
+            requires_safety_ack: document.getElementById('ev_safety').checked
+        };
+
+        const url = editingId ? `/api/events/${editingId}` : '/api/events';
+        const method = editingId ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const saved = await res.json();
+            showAlert('Сохранено — событие уже в афише!');
+            selectedAdminEventId = saved.id;
+            await loadAdminDashboard();
+        }
+    }
+
+    async function deleteCurrentEvent() {
+        const editingId = document.getElementById('ev_editing_id').value;
+        if (!editingId || !confirm('Удалить эту встречу из афиши?')) return;
+        const res = await fetch(`/api/events/${editingId}`, { method: 'DELETE' });
+        if (res.ok) {
+            showAlert('Встреча удалена');
+            selectedAdminEventId = null;
+            await loadAdminDashboard();
+        }
+    }
+
+    async function checkAdminAccess() {
+        // 1. Проверяем сохраненный вход в браузере
+        if (localStorage.getItem('gd_is_admin') === 'true') {
+            document.getElementById('adminNavBtn').style.display = 'block';
+            return;
+        }
+        // 2. Проверяем по Telegram ID на сервере
+        const res = await fetch(`/api/auth/check-admin/${currentPlatform}/${externalUserId}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.is_admin) {
+                document.getElementById('adminNavBtn').style.display = 'block';
+                return;
+            }
+        }
+        // 3. Если открыли ссылку /webapp?admin=1 в браузере — спрашиваем пароль
+        if (urlParams.get('admin') === '1') {
+            promptAdminPassword();
+        }
+    }
+
+    async function promptAdminPassword() {
+        const pwd = prompt('Вход в кабинет студии дизайна «Грея душу».\nВведите пароль администратора:');
+        if (!pwd) return;
+        const res = await fetch('/api/auth/admin-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: pwd })
+        });
+        if (res.ok) {
+            localStorage.setItem('gd_is_admin', 'true');
+            const btn = document.getElementById('adminNavBtn');
+            btn.style.display = 'block';
+            switchTab('admin', btn);
+            showAlert('Добро пожаловать в Кабинет!');
+        } else {
+            showAlert('Неверный пароль');
+        }
+    }
+
+    // Секретный жест: 5 быстрых нажатий на логотип в шапке открывают вход по паролю
+    let logoClicks = 0;
+    document.querySelector('.logo-img').addEventListener('click', () => {
+        logoClicks++;
+        if (logoClicks >= 5) {
+            logoClicks = 0;
+            promptAdminPassword();
+        }
+    });
+
+    checkAdminAccess();
+
+    loadUserProfile().then(() => loadEvents());
+</script>
+</body>
+</html>
