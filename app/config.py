@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     ADMIN_TG_IDS: str
     ADMIN_PASSWORD: str
 
+    CF_WORKER_URL: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
         env_file_encoding="utf-8",

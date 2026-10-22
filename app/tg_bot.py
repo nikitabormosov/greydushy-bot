@@ -18,6 +18,8 @@ from aiogram.types import (
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from sqlalchemy import select
+from aiogram.client.session.aiohttp import AiohttpSession
+from aiogram.client.telegram import TelegramAPIServer
 
 from app.config import settings
 from app.database import AsyncSessionLocal
@@ -62,7 +64,15 @@ def get_bot() -> Bot | None:
     if bot_instance is None:
         token = (settings.TG_BOT_TOKEN or "").strip()
         if token and token != "your_telegram_bot_token":
-            bot_instance = Bot(token=token)
+            session = None
+            cf_url = getattr(settings, "CF_WORKER_URL", None)
+
+            if cf_url:
+                # В aiogram метод называется from_base, а параметр в сессии — api
+                api_server = TelegramAPIServer.from_base(cf_url.strip())
+                session = AiohttpSession(api=api_server)
+
+            bot_instance = Bot(token=token, session=session)
     return bot_instance
 
 
