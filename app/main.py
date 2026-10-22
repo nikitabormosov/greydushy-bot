@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import re
 import uuid
@@ -10,9 +9,9 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from aiogram import Bot, Dispatcher
 
 from app.config import settings
 from app.database import engine, Base, get_db
@@ -26,7 +25,7 @@ from app.schemas import (
 )
 from app import crud
 from app.email_service import send_confirmation_email
-from app.tg_bot import router as tg_router
+from app import tg_bot
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,16 +35,15 @@ UPLOADS_DIR = BASE_DIR / "static" / "uploads"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+class AdminLoginRequest(BaseModel):
+    password: str
+
+
 async def resolve_address_coordinates(address: str) -> tuple[float, float] | None:
-    """
-    Находит точные координаты (широту и долготу) по текстовому адресу.
-    Поддерживает Яндекс Геокодер (если задан ключ) и умный поиск по Тюмени.
-    """
     clean_addr = address.strip()
     if "тюмень" not in clean_addr.lower():
         clean_addr = f"г. Тюмень, {clean_addr}"
 
-    # 1. Если в .env задан ключ Яндекс Карт — используем официальный геокодер Яндекса
     if settings.YANDEX_MAPS_API_KEY and settings.YANDEX_MAPS_API_KEY != "your_yandex_maps_js_api_key":
         try:
             async with httpx.AsyncClient(timeout=6.0) as client:
@@ -66,15 +64,16 @@ async def resolve_address_coordinates(address: str) -> tuple[float, float] | Non
                         .get("featureMember", [])
                     )
                     if members:
-                        pos = members[0]["GeoObject"]["Point"]["pos"]  # "lon lat"
+                        pos = members[0]["GeoObject"]["Point"]["pos"]
                         lon_str, lat_str = pos.split()
                         return float(lat_str), float(lon_str)
         except Exception as e:
             logger.warning(f"Ошибка Яндекс Геокодера: {e}")
 
-    # 2. Универсальный поиск с очисткой сложных сокращений ("ул. 25-го Октября, 23А, стр.1")
     simplified = re.sub(r"\b(г\.|ул\.|улица|д\.|дом)\s*", "", clean_addr, flags=re.IGNORECASE)
-    simplified_no_str = re.sub(r",?\s*(стр\.?|строение|корп\.?|корпус)\s*\d+.*", "", simplified, flags=re.IGNORECASE)
+    simplified_no_str = re.sub(
+        r",?\s*(стр\.?|строение|корп\.?|корпус)\s*\d+.*", "", simplified, flags=re.IGNORECASE
+    )
 
     for candidate in [clean_addr, simplified, simplified_no_str]:
         try:
@@ -100,19 +99,16 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    bot_task = None
-    bot = None
-    if settings.TG_BOT_TOKEN and settings.TG_BOT_TOKEN != "your_telegram_bot_token":
-        bot = Bot(token=settings.TG_BOT_TOKEN)
-        dp = Dispatcher()
-        dp.include_router(tg_router)
-        bot_task = asyncio.create_task(dp.start_polling(bot))
-        logger.info("Telegram-бот успешно запущен!")
+    # Запускаем Telegram-бота и планировщик напоминаний из tg_bot.py
+    polling_task, scheduler_task = await tg_bot.start_telegram_bot()
 
     yield
 
-    if bot_task:
-        bot_task.cancel()
+    if scheduler_task:
+        scheduler_task.cancel()
+    if polling_task:
+        polling_task.cancel()
+    bot = tg_bot.get_bot()
     if bot:
         await bot.session.close()
 
@@ -135,18 +131,10 @@ async def serve_mini_app():
     return FileResponse(BASE_DIR / "static" / "index.html")
 
 
-from pydantic import BaseModel
-
-
-class AdminLoginRequest(BaseModel):
-    password: str
-
-
 @app.get("/api/auth/check-admin/{platform}/{external_user_id}")
 async def check_is_admin(
     platform: PlatformType, external_user_id: str, db: AsyncSession = Depends(get_db)
 ):
-    """Проверяет, является ли пользователь администратором по Telegram ID или роли в БД"""
     admin_ids = [x.strip() for x in settings.ADMIN_TG_IDS.split(",") if x.strip()]
     if platform == PlatformType.TG and external_user_id in admin_ids:
         return {"is_admin": True}
@@ -160,7 +148,6 @@ async def check_is_admin(
 
 @app.post("/api/auth/admin-login")
 async def login_admin_by_password(data: AdminLoginRequest):
-    """Вход в Кабинет администратора из браузера по паролю"""
     if data.password == settings.ADMIN_PASSWORD:
         return {"is_admin": True}
     raise HTTPException(status_code=401, detail="Неверный пароль кабинета")
@@ -168,7 +155,6 @@ async def login_admin_by_password(data: AdminLoginRequest):
 
 @app.get("/api/geocode")
 async def geocode_endpoint(address: str = Query(..., description="Адрес для поиска на карте")):
-    """Серверный поиск координат по адресу в Тюмени"""
     coords = await resolve_address_coordinates(address)
     if not coords:
         raise HTTPException(status_code=404, detail="Координаты не найдены автоматически")
@@ -203,7 +189,6 @@ async def upload_event_cover(file: UploadFile = File(...)):
 @app.post("/api/events", response_model=EventResponseSchema)
 async def create_event(data: EventCreateSchema, db: AsyncSession = Depends(get_db)):
     dump = data.model_dump()
-    # Если координаты не переданы или остались дефолтными — геокодируем адрес автоматически
     coords = await resolve_address_coordinates(dump["address"])
     if coords:
         dump["latitude"], dump["longitude"] = coords
@@ -268,27 +253,25 @@ async def delete_event(event_id: int, db: AsyncSession = Depends(get_db)):
 
 @app.post("/api/registrations")
 async def register_for_event(data: RegistrationCreateSchema, db: AsyncSession = Depends(get_db)):
-    """Запись на мастер-класс с мгновенной отправкой письма через api.greydushy.com/webhook"""
     reg = await crud.book_event(db, data)
     email_ok = False
+    user = await db.get(User, data.user_id)
+    event = await db.get(Event, data.event_id)
 
     if reg.status == RegistrationStatus.REGISTERED:
-        user = await db.get(User, data.user_id)
-        event = await db.get(Event, data.event_id)
         email_ok, _ = await send_confirmation_email(db, user, event, reg)
+
+    # Мгновенно отправляем билет в личные сообщения Telegram-бота
+    await tg_bot.notify_user_in_telegram(user, event, reg, db)
 
     return {
         "registration_id": reg.id,
         "status": reg.status,
         "email_sent": email_ok,
         "message": (
-            f"Вы записаны! Письмо с деталями отправлено на вашу почту."
-            if reg.status == RegistrationStatus.REGISTERED and email_ok
-            else (
-                "Вы успешно записаны на встречу!"
-                if reg.status == RegistrationStatus.REGISTERED
-                else "Все места заняты, вы добавлены в лист ожидания."
-            )
+            "Вы записаны! Подтверждение отправлено в чат бота и на вашу почту."
+            if reg.status == RegistrationStatus.REGISTERED
+            else "Все места заняты, вы добавлены в лист ожидания."
         ),
     }
 
@@ -319,7 +302,6 @@ async def get_user_registrations(user_id: int, db: AsyncSession = Depends(get_db
 
 @app.delete("/api/registrations/{reg_id}")
 async def cancel_registration_api(reg_id: int, db: AsyncSession = Depends(get_db)):
-    """Отмена записи гостем + автоперевод первого человека из Листа ожидания с отправкой ему письма"""
     reg = await db.get(Registration, reg_id)
     if not reg:
         raise HTTPException(status_code=404, detail="Запись не найдена")
@@ -328,7 +310,6 @@ async def cancel_registration_api(reg_id: int, db: AsyncSession = Depends(get_db
     reg.status = RegistrationStatus.CANCELLED
     await db.commit()
 
-    # Если место освободилось — берем первого из листа ожидания и отправляем ему письмо!
     if was_active:
         wait_stmt = (
             select(Registration)
@@ -346,6 +327,7 @@ async def cancel_registration_api(reg_id: int, db: AsyncSession = Depends(get_db
             user = await db.get(User, next_in_line.user_id)
             event = await db.get(Event, next_in_line.event_id)
             await send_confirmation_email(db, user, event, next_in_line)
+            await tg_bot.notify_user_in_telegram(user, event, next_in_line, db)
 
     return {"status": "cancelled"}
 
@@ -354,7 +336,6 @@ async def cancel_registration_api(reg_id: int, db: AsyncSession = Depends(get_db
 async def update_guest_status(
     reg_id: int, new_status: RegistrationStatus, db: AsyncSession = Depends(get_db)
 ):
-    """Изменение статуса гостя администратором (если перевели в состав и письмо еще не уходило — отправляем)"""
     reg = await db.get(Registration, reg_id)
     if not reg:
         raise HTTPException(status_code=404, detail="Запись не найдена")
@@ -366,13 +347,13 @@ async def update_guest_status(
         user = await db.get(User, reg.user_id)
         event = await db.get(Event, reg.event_id)
         await send_confirmation_email(db, user, event, reg)
+        await tg_bot.notify_user_in_telegram(user, event, reg, db)
 
     return {"registration_id": reg.id, "status": reg.status, "email_sent": reg.email_sent}
 
 
 @app.post("/api/admin/registrations/{reg_id}/resend-email")
 async def resend_guest_confirmation_email(reg_id: int, db: AsyncSession = Depends(get_db)):
-    """Ручная повторная отправка письма подтверждения из Кабинета администратора"""
     reg = await db.get(Registration, reg_id)
     if not reg:
         raise HTTPException(status_code=404, detail="Запись не найдена")
@@ -382,6 +363,16 @@ async def resend_guest_confirmation_email(reg_id: int, db: AsyncSession = Depend
     if not ok:
         raise HTTPException(status_code=502, detail=msg)
     return {"email_sent": True, "message": f"Письмо повторно отправлено на {user.email}"}
+
+
+@app.post("/api/admin/events/{event_id}/broadcast")
+async def broadcast_event_from_admin(event_id: int, db: AsyncSession = Depends(get_db)):
+    """Рассылает анонс выбранного мастер-класса всем подписчикам Telegram-бота"""
+    event = await db.get(Event, event_id)
+    if not event:
+        raise HTTPException(status_code=404, detail="Событие не найдено")
+    sent_count = await tg_bot.broadcast_event_announcement(event, db)
+    return {"sent_count": sent_count, "message": f"Анонс отправлен {sent_count} подписчикам бота!"}
 
 
 @app.get("/api/admin/registrations")

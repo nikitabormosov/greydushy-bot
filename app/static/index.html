@@ -718,9 +718,10 @@
         <div id="adminEventsSelector" class="admin-event-selector"></div>
 
         <!-- Переключатель режима внутри выбранной встречи -->
-        <div id="adminSubTabs" style="display:none; gap:.5rem; margin-bottom:1rem;">
-            <button type="button" id="subTabGuestsBtn" class="btn btn-primary btn-sm" style="flex:1;" onclick="switchAdminMode('guests')">👥 Участники встречи</button>
-            <button type="button" id="subTabEditBtn" class="btn btn-ghost btn-sm" style="flex:1;" onclick="switchAdminMode('form')">✏️ Редактировать встречу</button>
+        <div id="adminSubTabs" style="display:none; gap:.45rem; flex-wrap:wrap; margin-bottom:1rem;">
+            <button type="button" id="subTabGuestsBtn" class="btn btn-primary btn-sm" style="flex:1;" onclick="switchAdminMode('guests')">👥 Участники</button>
+            <button type="button" id="subTabEditBtn" class="btn btn-ghost btn-sm" style="flex:1;" onclick="switchAdminMode('form')">✏️ Редактировать</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="broadcastCurrentEvent()">📢 Анонс в ТГ</button>
         </div>
 
         <!-- Панель отслеживания участников -->
@@ -1517,7 +1518,25 @@
 
     checkAdminAccess();
 
-    loadUserProfile().then(() => loadEvents());
+    async function broadcastCurrentEvent() {
+        if (!selectedAdminEventId) return;
+        if (!confirm('Отправить анонс этой встречи всем подписчикам Telegram-бота?')) return;
+        const res = await fetch(`/api/admin/events/${selectedAdminEventId}/broadcast`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+            showAlert(data.message);
+        } else {
+            showAlert(data.detail || 'Ошибка при рассылке анонса');
+        }
+    }
+
+    loadUserProfile().then(async () => {
+        await loadEvents();
+        const targetEvId = urlParams.get('event_id');
+        if (targetEvId) {
+            openEventDetail(parseInt(targetEvId));
+        }
+    });
 </script>
 </body>
 </html>
