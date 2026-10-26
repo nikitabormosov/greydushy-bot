@@ -569,11 +569,14 @@
         }
 
         /* --- РЕЖИМ ВСТРАИВАНИЯ АНКЕТЫ НА САЙТ (IFRAME ВМЕСТО ЯНДЕКС ФОРМЫ) --- */
+        html.is-embed,
         body.is-embed {
-            padding: 0;
-            margin: 0;
-            min-height: auto;
-            background: transparent;
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height: 0 !important;
+            height: auto !important;
+            overflow: hidden !important;
+            background: transparent !important;
         }
         body.is-embed:before,
         body.is-embed .app-header,
@@ -1247,13 +1250,32 @@
 
     // --- ЛОГИКА ВСТРАИВАЕМОЙ АНКЕТЫ НА САЙТ (ВМЕСТО ЯНДЕКС ФОРМЫ) ---
 
+    let embedResizeObserver = null;
+
     function notifyParentHeight() {
-        if (window.parent && window.parent !== window) {
-            setTimeout(() => {
-                const h = document.documentElement.scrollHeight;
+        if (!isEmbedMode) return;
+        document.documentElement.classList.add('is-embed');
+        document.body.classList.add('is-embed');
+
+        const sendHeight = () => {
+            const box = document.getElementById('embedContent');
+            if (!box) return;
+            const h = Math.ceil(box.getBoundingClientRect().height) + 8;
+            if (window.parent && window.parent !== window && h > 50) {
                 window.parent.postMessage({ type: 'gd-embed-height', height: h }, '*');
-            }, 80);
+            }
+        };
+
+        sendHeight();
+        setTimeout(sendHeight, 100);
+        setTimeout(sendHeight, 400);
+
+        const box = document.getElementById('embedContent');
+        if (box && window.ResizeObserver && !embedResizeObserver) {
+            embedResizeObserver = new ResizeObserver(() => sendHeight());
+            embedResizeObserver.observe(box);
         }
+        window.addEventListener('resize', sendHeight);
     }
 
     async function renderEmbedWidget(eventId) {
