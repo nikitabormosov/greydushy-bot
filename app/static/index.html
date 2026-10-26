@@ -166,7 +166,7 @@
             color: var(--clay);
         }
 
-        /* --- КАРТОЧКА В АФИШЕ (КАК НА ПРИКРЕПЛЕННОМ СКРИНШОТЕ) --- */
+        /* --- КАРТОЧКА В АФИШЕ --- */
         .event-list {
             display: grid;
             gap: 1.15rem;
@@ -280,7 +280,6 @@
             color: var(--ink);
         }
 
-        /* Адаптив карточки для узких экранов смартфонов */
         @media (max-width: 520px) {
             .event-row {
                 grid-template-columns: 1fr;
@@ -364,12 +363,6 @@
             margin: .75rem 0 .5rem;
             background: var(--paper);
         }
-        .map-box {
-            height: 190px;
-            width: 100%;
-            z-index: 1;
-            filter: sepia(14%) saturate(92%);
-        }
 
         .form-grid { display: grid; gap: .9rem; }
         label.studio-label {
@@ -408,7 +401,7 @@
             border: 1px dashed rgba(224, 112, 48, .38);
             border-radius: 24px;
             padding: .95rem 1.1rem;
-            margin: .85rem 0;
+            margin: .35rem 0;
         }
         .legal-text { font-size: .8rem; color: var(--muted); line-height: 1.48; margin-bottom: .65rem; }
         .consent-pill {
@@ -575,6 +568,36 @@
             box-shadow: var(--shadow);
         }
 
+        /* --- РЕЖИМ ВСТРАИВАНИЯ АНКЕТЫ НА САЙТ (IFRAME ВМЕСТО ЯНДЕКС ФОРМЫ) --- */
+        body.is-embed {
+            padding: 0;
+            margin: 0;
+            min-height: auto;
+            background: transparent;
+        }
+        body.is-embed:before,
+        body.is-embed .app-header,
+        body.is-embed .bottom-nav {
+            display: none !important;
+        }
+        body.is-embed .container {
+            max-width: 100%;
+            padding: 0;
+        }
+        body.is-embed .studio-card {
+            margin-bottom: 0;
+            border-radius: 36px;
+            box-shadow: none;
+        }
+        .embed-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: .8rem;
+        }
+        @media (max-width: 560px) {
+            .embed-grid-2 { grid-template-columns: 1fr; }
+        }
+
         @keyframes fadeUp {
             0% { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: none; }
@@ -623,17 +646,22 @@
 <main class="container">
     <div id="alertBox" class="notice-banner"></div>
 
-    <!-- ВКЛАДКА 1: ЛЕНТА АФИШИ (КОМПАКТНЫЕ КАРТОЧКИ КАК НА СКРИНШОТЕ) -->
+    <!-- ВКЛАДКА 1: ЛЕНТА АФИШИ -->
     <section id="tab-events" class="tab-pane active">
         <p class="eyebrow">афиша встреч</p>
         <h2 class="section-title">Мастер-классы</h2>
         <div id="eventsList" class="event-list"></div>
     </section>
 
-    <!-- ПОДРОБНАЯ СТРАНИЦА ВЫБРАННОГО СОБЫТИЯ (ОТКРЫВАЕТСЯ ПО КЛИКУ НА КАРТОЧКУ) -->
+    <!-- ПОДРОБНАЯ СТРАНИЦА ВЫБРАННОГО СОБЫТИЯ -->
     <section id="tab-event-detail" class="tab-pane">
         <button type="button" class="back-link" onclick="closeEventDetail()">← все мастер-классы</button>
         <div id="eventDetailContent"></div>
+    </section>
+
+    <!-- ОТДЕЛЬНАЯ АНКЕТА ДЛЯ ВСТРАИВАНИЯ IFRAME НА САЙТ (?embed=1&event_id=X) -->
+    <section id="tab-embed" class="tab-pane">
+        <div id="embedContent"></div>
     </section>
 
     <!-- ВКЛАДКА 2: МОИ ЗАПИСИ -->
@@ -722,6 +750,7 @@
             <button type="button" id="subTabGuestsBtn" class="btn btn-primary btn-sm" style="flex:1;" onclick="switchAdminMode('guests')">👥 Участники</button>
             <button type="button" id="subTabEditBtn" class="btn btn-ghost btn-sm" style="flex:1;" onclick="switchAdminMode('form')">✏️ Редактировать</button>
             <button type="button" class="btn btn-ghost btn-sm" onclick="broadcastCurrentEvent()">📢 Анонс в ТГ</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="copySiteEmbedUrl()">🔗 Анкета для сайта</button>
         </div>
 
         <!-- Панель отслеживания участников -->
@@ -738,9 +767,21 @@
             </svg>
         </div>
 
-        <!-- Форма создания и редактирования события (без "Что входит", со свободным форматом) -->
+        <!-- Форма создания и редактирования события -->
         <div id="adminFormPanel" class="studio-card">
             <p class="script" id="adminFormHeader" style="margin-bottom:.6rem;">новая встреча в афише</p>
+
+            <!-- Блок с готовой ссылкой на анкету регистрации для вставки на сайт (показывается при редактировании события) -->
+            <div id="embedUrlBox" class="legal-box" style="display:none; margin-top:0; margin-bottom:1rem;">
+                <div class="legal-text" style="margin-bottom:.45rem;">
+                    <strong style="color:var(--ink);">🔗 Ссылка на анкету регистрации для основного сайта</strong><br>
+                    Скопируйте эту ссылку и вставьте её на сайте <code>greydushy.com/admin</code> в поле «Ссылка на Яндекс Форму» — на странице события появится наша фирменная анкета, подключенная к единой БД:
+                </div>
+                <div style="display:flex; gap:.45rem; align-items:center;">
+                    <input type="text" id="ev_embed_link_input" readonly onclick="this.select()" style="font-size:.82rem; padding:.5rem .75rem;" />
+                    <button type="button" class="btn btn-primary btn-sm" style="flex-shrink:0;" onclick="copySiteEmbedUrl()">📋 Скопировать</button>
+                </div>
+            </div>
 
             <form id="createEventForm" class="form-grid" onsubmit="saveEventFromAdmin(event)">
                 <input type="hidden" id="ev_editing_id" value="" />
@@ -857,7 +898,6 @@
     const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
     if (tg) { tg.expand(); }
 
-    // Если открыто в браузере вне Telegram — сохраняем уникальный ID браузера в localStorage
     function getBrowserDeviceId() {
         let devId = localStorage.getItem('gd_device_id');
         if (!devId) {
@@ -868,7 +908,8 @@
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const currentPlatform = urlParams.get('platform') || 'tg';
+    const isEmbedMode = urlParams.get('embed') === '1';
+    const currentPlatform = urlParams.get('platform') || (isEmbedMode ? 'vk' : 'tg');
     const externalUserId = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user)
         ? String(tg.initDataUnsafe.user.id)
         : (urlParams.get('uid') || getBrowserDeviceId());
@@ -879,8 +920,6 @@
     let currentDetailEventId = null;
     let selectedAdminEventId = null;
     let cachedAdminGuests = [];
-    let adminMapInstance = null;
-    let adminMarker = null;
 
     const STATUS_LABELS = {
         registered: '✅ Записан',
@@ -953,7 +992,11 @@
 
     async function loadUserProfile() {
         try {
-            const res = await fetch(`/api/users/me/${currentPlatform}/${externalUserId}`);
+            let res = await fetch(`/api/users/me/${currentPlatform}/${externalUserId}`);
+            if (!res.ok && isEmbedMode) {
+                // Проверяем также профиль, если раньше гость заходил с этого же браузера как 'tg'
+                res = await fetch(`/api/users/me/tg/${externalUserId}`);
+            }
             if (res.ok) {
                 currentUser = await res.json();
                 document.getElementById('userGreeting').innerText = `привет, ${currentUser.first_name}!`;
@@ -1044,7 +1087,7 @@
         }).join('');
     }
 
-    // 2. Подробная страница события с встроенной Яндекс.Картой и согласием с ТБ
+    // 2. Подробная страница события
     function openEventDetail(eventId) {
         const ev = cachedEvents.find(x => x.id === eventId);
         if (!ev) return;
@@ -1060,10 +1103,7 @@
 
         const lat = ev.latitude || 57.1553;
         const lon = ev.longitude || 65.5619;
-        // Нативный виджет Яндекс Карт с оранжевой меткой (pm2orgm) прямо по координатам встречи
         const yandexWidgetUrl = `https://yandex.ru/map-widget/v1/?ll=${lon}%2C${lat}&z=16&pt=${lon},${lat},pm2orgm`;
-        const yandexRouteUrl = `https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto`;
-        const twoGisUrl = `https://2gis.ru/tyumen/search/${encodeURIComponent(ev.address)}`;
 
         const box = document.getElementById('eventDetailContent');
         box.innerHTML = `
@@ -1099,7 +1139,6 @@
                     </div>
                 </dl>
 
-                <!-- ИНТЕРАКТИВНАЯ ЯНДЕКС КАРТА (без лишних кнопок снизу) -->
                 <div class="map-wrapper" style="margin-bottom: 1rem;">
                     <iframe
                         src="${yandexWidgetUrl}"
@@ -1206,6 +1245,223 @@
         loadMyRegistrations();
     }
 
+    // --- ЛОГИКА ВСТРАИВАЕМОЙ АНКЕТЫ НА САЙТ (ВМЕСТО ЯНДЕКС ФОРМЫ) ---
+
+    function notifyParentHeight() {
+        if (window.parent && window.parent !== window) {
+            setTimeout(() => {
+                const h = document.documentElement.scrollHeight;
+                window.parent.postMessage({ type: 'gd-embed-height', height: h }, '*');
+            }, 80);
+        }
+    }
+
+    async function renderEmbedWidget(eventId) {
+        document.body.classList.add('is-embed');
+        document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+        document.getElementById('tab-embed').classList.add('active');
+
+        const box = document.getElementById('embedContent');
+        const ev = cachedEvents.find(x => x.id === eventId);
+
+        if (!ev) {
+            box.innerHTML = `
+                <div class="studio-card warm-grad" style="text-align:center; padding: 2.2rem 1.4rem;">
+                    <img src="https://greydushy.com/logo.png" alt="" style="width:84px; height:84px; border-radius:50%; margin-bottom:.5rem;" />
+                    <p class="script">запись закрыта</p>
+                    <p style="color:var(--muted); margin:0;">Это мероприятие уже прошло или ссылка устарела.</p>
+                </div>`;
+            notifyParentHeight();
+            return;
+        }
+
+        // Проверяем, не записан ли уже этот гость на данную встречу
+        let existingReg = null;
+        if (currentUser) {
+            const regRes = await fetch(`/api/users/${currentUser.id}/registrations`);
+            if (regRes.ok) {
+                const myRegs = await regRes.json();
+                existingReg = myRegs.find(r => r.event_id === ev.id);
+            }
+        }
+
+        if (existingReg) {
+            const isWaitlist = existingReg.status === 'waitlist';
+            box.innerHTML = `
+                <div class="studio-card warm-grad" style="text-align:center; padding: 2.2rem 1.4rem 2.6rem;">
+                    <img src="https://greydushy.com/logo.png" alt="" style="width:82px; height:82px; border-radius:50%; margin-bottom:.65rem; box-shadow: 0 10px 20px #e0703047;" />
+                    <p class="script" style="font-size:1.75rem; margin-bottom:.3rem;">
+                        ${isWaitlist ? 'вы в листе ожидания' : `${currentUser.first_name}, место за вами!`}
+                    </p>
+                    <h3 style="font-size:1.45rem; margin-bottom:.6rem;">${ev.title}</h3>
+                    <p style="color:var(--muted); font-size:.95rem; max-width:460px; margin:0 auto 1.1rem;">
+                        ${isWaitlist
+                            ? 'Все основные места сейчас заняты. Как только появится свободное окошко — мы сразу пришлём вам приглашение!'
+                            : `Мы сохранили вашу запись и отправили письмо с подтверждением на почту <strong>${currentUser.email}</strong>.`}
+                    </p>
+                    <p style="font-weight:700; font-size:.92rem; margin-bottom:1.25rem;">
+                        📍 ${ev.address}${ev.location_details ? ` (${ev.location_details})` : ''}
+                    </p>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="cancelEmbedReg(${existingReg.registration_id}, ${ev.id})">
+                        Отменить мою запись
+                    </button>
+                    <svg class="card-thread" viewBox="0 0 320 48" aria-hidden="true">
+                        <path d="M8 28 C 70 8, 120 42, 168 22 S 270 8, 312 30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="5 8"></path>
+                    </svg>
+                </div>`;
+            notifyParentHeight();
+            return;
+        }
+
+        const seatsBadge = ev.available_seats > 0
+            ? `<span class="chip chip-craft">Свободно мест: ${ev.available_seats} из ${ev.max_seats}</span>`
+            : `<span class="chip">Места заняты · запись в лист ожидания</span>`;
+
+        box.innerHTML = `
+            <div class="studio-card warm-grad">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:.5rem; margin-bottom:.85rem;">
+                    <div>
+                        <p class="script" style="margin:0; line-height:1.1;">анкета участника</p>
+                        <h3 style="font-size:1.4rem; margin-top:.15rem;">${ev.title}</h3>
+                    </div>
+                    ${seatsBadge}
+                </div>
+
+                <form class="form-grid" onsubmit="submitEmbedBooking(event, ${ev.id})">
+                    <div class="embed-grid-2">
+                        <label class="studio-label">
+                            <span><span class="req">*</span>Фамилия</span>
+                            <input type="text" id="emb_last_name" value="${currentUser ? currentUser.last_name : ''}" required />
+                        </label>
+                        <label class="studio-label">
+                            <span><span class="req">*</span>Имя</span>
+                            <input type="text" id="emb_first_name" value="${currentUser ? currentUser.first_name : ''}" required />
+                        </label>
+                    </div>
+
+                    <div class="embed-grid-2">
+                        <label class="studio-label">
+                            <span>Отчество <span class="hint">(при наличии)</span></span>
+                            <input type="text" id="emb_patronymic" value="${currentUser && currentUser.patronymic ? currentUser.patronymic : ''}" />
+                        </label>
+                        <label class="studio-label">
+                            <span><span class="req">*</span>Телефон</span>
+                            <input type="tel" id="emb_phone" placeholder="+7 (999) 000-00-00" value="${currentUser ? currentUser.phone : ''}" required />
+                        </label>
+                    </div>
+
+                    <div class="embed-grid-2">
+                        <label class="studio-label">
+                            <span><span class="req">*</span>Почта</span>
+                            <input type="email" id="emb_email" placeholder="hello@greydushy.com" value="${currentUser ? currentUser.email : ''}" required />
+                        </label>
+                        <label class="studio-label">
+                            <span><span class="req">*</span>Профиль ВК</span>
+                            <input type="text" id="emb_vk" placeholder="https://vk.com/..." value="${currentUser ? currentUser.vk_profile : ''}" required />
+                        </label>
+                    </div>
+
+                    <div class="legal-box">
+                        <div class="legal-text">
+                            <strong style="color:var(--ink);"><span style="color:var(--terracotta);">*</span> Обработка персональных данных</strong><br>
+                            Политика: <a href="https://greydushy.com/privacy.pdf" target="_blank">greydushy.com/privacy.pdf</a> ·
+                            Согласие: <a href="https://greydushy.com/privacy_agreement.pdf" target="_blank">greydushy.com/privacy_agreement.pdf</a><br>
+                            Я ознакомлен(а) и согласен(на) с Политикой обработки персональных данных Студии дизайна «Грея душу», даю своё добровольное согласие на обработку моих персональных данных.
+                        </div>
+                        <label class="consent-pill">
+                            <input type="checkbox" id="emb_pdn" checked required />
+                            <span>Ознакомлен(а) и согласен(на)</span>
+                        </label>
+                    </div>
+
+                    ${ev.requires_safety_ack ? `
+                    <div class="legal-box">
+                        <div class="legal-text">
+                            <strong style="color:var(--ink);"><span style="color:var(--terracotta);">*</span> Техника безопасности</strong><br>
+                            Соглашение: <a href="https://greydushy.com/safety_precautions.pdf" target="_blank">greydushy.com/safety_precautions.pdf</a><br>
+                            Настоящим я подтверждаю, что внимательно прочитал(а) и полностью согласен(на) с Правилами техники безопасности Студии дизайна «Грея душу». Я осознаю, что на мастер-классе используются колющие и режущие инструменты, требующие осторожности.
+                        </div>
+                        <label class="consent-pill">
+                            <input type="checkbox" id="emb_safety" required />
+                            <span>Ознакомлен(а) и согласен(на)</span>
+                        </label>
+                    </div>` : ''}
+
+                    <button type="submit" id="embSubmitBtn" class="btn btn-primary">
+                        ${ev.available_seats > 0 ? 'Записаться на встречу' : 'Встать в лист ожидания'}
+                    </button>
+                </form>
+
+                <svg class="card-thread" viewBox="0 0 320 48" aria-hidden="true">
+                    <path d="M8 28 C 70 8, 120 42, 168 22 S 270 8, 312 30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-dasharray="5 8"></path>
+                </svg>
+            </div>`;
+        notifyParentHeight();
+    }
+
+    async function submitEmbedBooking(e, eventId) {
+        e.preventDefault();
+        const btn = document.getElementById('embSubmitBtn');
+        btn.disabled = true;
+        btn.innerText = 'Оформляем запись…';
+
+        const userPayload = {
+            last_name: document.getElementById('emb_last_name').value.trim(),
+            first_name: document.getElementById('emb_first_name').value.trim(),
+            patronymic: document.getElementById('emb_patronymic').value.trim() || null,
+            phone: document.getElementById('emb_phone').value.trim(),
+            email: document.getElementById('emb_email').value.trim(),
+            vk_profile: document.getElementById('emb_vk').value.trim(),
+            pdn_accepted: true,
+            platform: currentPlatform,
+            external_user_id: externalUserId,
+            username: null
+        };
+
+        const userRes = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userPayload)
+        });
+
+        if (!userRes.ok) {
+            const err = await userRes.json();
+            showAlert(err.detail || 'Проверьте правильность заполнения полей');
+            btn.disabled = false;
+            btn.innerText = 'Записаться на встречу';
+            return;
+        }
+
+        currentUser = await userRes.json();
+
+        const regRes = await fetch('/api/registrations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id: currentUser.id,
+                event_id: eventId,
+                safety_accepted: true
+            })
+        });
+
+        const regData = await regRes.json();
+        if (regRes.ok) {
+            await loadEvents();
+            await renderEmbedWidget(eventId);
+        } else {
+            showAlert(regData.detail || 'Не удалось оформить запись');
+            btn.disabled = false;
+            btn.innerText = 'Записаться на встречу';
+        }
+    }
+
+    async function cancelEmbedReg(regId, eventId) {
+        if (!confirm('Отменить вашу запись на эту встречу?')) return;
+        await fetch(`/api/registrations/${regId}`, { method: 'DELETE' });
+        await loadEvents();
+        await renderEmbedWidget(eventId);
+    }
+
     // --- ЛОГИКА КАБИНЕТА АДМИНИСТРАТОРА ---
 
     async function loadAdminDashboard() {
@@ -1248,6 +1504,10 @@
 
         document.getElementById('adminSubTabs').style.display = 'flex';
 
+        const embedLink = `${window.location.origin}/webapp?embed=1&event_id=${ev.id}`;
+        document.getElementById('embedUrlBox').style.display = 'block';
+        document.getElementById('ev_embed_link_input').value = embedLink;
+
         document.getElementById('ev_editing_id').value = ev.id;
         document.getElementById('adminFormHeader').innerText = `редактирование: ${ev.title}`;
         document.getElementById('ev_title').value = ev.title;
@@ -1288,6 +1548,7 @@
         document.getElementById('adminFormHeader').innerText = 'новая встреча в афише';
         document.getElementById('deleteEventBtn').style.display = 'none';
         document.getElementById('coverPreviewBox').style.display = 'none';
+        document.getElementById('embedUrlBox').style.display = 'none';
         document.getElementById('adminSubTabs').style.display = 'none';
         document.getElementById('adminGuestsPanel').style.display = 'none';
         document.getElementById('adminFormPanel').style.display = 'block';
@@ -1311,6 +1572,28 @@
             gBtn.className = 'btn btn-ghost btn-sm';
             eBtn.className = 'btn btn-primary btn-sm';
             initAdminMap();
+        }
+    }
+
+    function copySiteEmbedUrl() {
+        if (!selectedAdminEventId) return;
+        const embedUrl = `${window.location.origin}/webapp?embed=1&event_id=${selectedAdminEventId}`;
+        navigator.clipboard.writeText(embedUrl).then(() => {
+            showAlert('Ссылка на анкету скопирована! Вставьте её на сайте в поле «Ссылка на Яндекс Форму».');
+        }).catch(() => {
+            prompt('Скопируйте ссылку для вставки на сайт:', embedUrl);
+        });
+    }
+
+    async function broadcastCurrentEvent() {
+        if (!selectedAdminEventId) return;
+        if (!confirm('Отправить анонс этой встречи всем подписчикам Telegram-бота?')) return;
+        const res = await fetch(`/api/admin/events/${selectedAdminEventId}/broadcast`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+            showAlert(data.message);
+        } else {
+            showAlert(data.detail || 'Ошибка при рассылке анонса');
         }
     }
 
@@ -1452,6 +1735,7 @@
             showAlert('Сохранено — событие уже в афише!');
             selectedAdminEventId = saved.id;
             await loadAdminDashboard();
+            switchAdminMode('form');
         }
     }
 
@@ -1467,12 +1751,11 @@
     }
 
     async function checkAdminAccess() {
-        // 1. Проверяем сохраненный вход в браузере
+        if (isEmbedMode) return;
         if (localStorage.getItem('gd_is_admin') === 'true') {
             document.getElementById('adminNavBtn').style.display = 'block';
             return;
         }
-        // 2. Проверяем по Telegram ID на сервере
         const res = await fetch(`/api/auth/check-admin/${currentPlatform}/${externalUserId}`);
         if (res.ok) {
             const data = await res.json();
@@ -1481,7 +1764,6 @@
                 return;
             }
         }
-        // 3. Если открыли ссылку /webapp?admin=1 в браузере — спрашиваем пароль
         if (urlParams.get('admin') === '1') {
             promptAdminPassword();
         }
@@ -1506,7 +1788,6 @@
         }
     }
 
-    // Секретный жест: 5 быстрых нажатий на логотип в шапке открывают вход по паролю
     let logoClicks = 0;
     document.querySelector('.logo-img').addEventListener('click', () => {
         logoClicks++;
@@ -1518,25 +1799,27 @@
 
     checkAdminAccess();
 
-    async function broadcastCurrentEvent() {
-        if (!selectedAdminEventId) return;
-        if (!confirm('Отправить анонс этой встречи всем подписчикам Telegram-бота?')) return;
-        const res = await fetch(`/api/admin/events/${selectedAdminEventId}/broadcast`, { method: 'POST' });
-        const data = await res.json();
-        if (res.ok) {
-            showAlert(data.message);
-        } else {
-            showAlert(data.detail || 'Ошибка при рассылке анонса');
-        }
-    }
-
     loadUserProfile().then(async () => {
         await loadEvents();
-        const targetEvId = urlParams.get('event_id');
-        if (targetEvId) {
-            openEventDetail(parseInt(targetEvId));
+        const targetEvId = parseInt(urlParams.get('event_id'));
+        if (isEmbedMode && targetEvId) {
+            await renderEmbedWidget(targetEvId);
+        } else if (targetEvId) {
+            openEventDetail(targetEvId);
         }
     });
+</script>
+<script>
+      window.addEventListener("message", function (e) {
+        if (e.data && e.data.type === "gd-embed-height") {
+          var iframe = document.querySelector("iframe.yandex-form");
+          if (iframe) {
+            iframe.style.height = e.data.height + 16 + "px";
+            iframe.style.minHeight = e.data.height + 16 + "px";
+            iframe.style.background = "transparent";
+          }
+        }
+      });
 </script>
 </body>
 </html>

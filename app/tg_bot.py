@@ -155,8 +155,9 @@ async def notify_user_in_telegram(user: User, event: Event, reg: Registration, d
     stmt = select(UserPlatform).where(
         UserPlatform.user_id == user.id,
         UserPlatform.platform == PlatformType.TG,
+        ~UserPlatform.external_user_id.like("web_%"),
     )
-    plat = (await db.execute(stmt)).scalar_one_or_none()
+    plat = (await db.execute(stmt)).scalars().first()
     if not plat:
         return
 
