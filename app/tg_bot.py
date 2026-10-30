@@ -44,6 +44,7 @@ dp.include_router(router)
 
 # Глобальный объект бота (создается при старте с ключом TG_BOT_TOKEN из .env)
 bot_instance: Bot | None = None
+bot_username: str = ""
 
 # Память отправленных напоминаний, чтобы не слать дубли
 sent_24h_reminders: set[int] = set()
@@ -90,8 +91,10 @@ async def start_telegram_bot() -> tuple[asyncio.Task | None, asyncio.Task | None
         # Обязательно удаляем старый webhook в Telegram, иначе /start не дойдет до polling!
         await bot.delete_webhook(drop_pending_updates=True)
         await setup_bot_menu_button(bot)
+        global bot_username
         me = await bot.get_me()
-        logger.info(f"✅ Telegram-бот @{me.username} (ID: {me.id}) успешно подключен к API!")
+        bot_username = me.username or ""
+        logger.info(f"✅ Telegram-бот @{bot_username} (ID: {me.id}) успешно подключен к API!")
     except Exception as e:
         logger.error(f"❌ Ошибка подключения к Telegram API (проверь TG_BOT_TOKEN): {e}")
         return None, None
@@ -329,11 +332,11 @@ async def reminder_scheduler_loop():
         await asyncio.sleep(60)
 
 
-async def render_event_card(event_id: int) -> tuple[str, InlineKeyboardMarkup]:
+async def render_event_card(event_id: int, tg_user_id: str | None = None) -> tuple[str, InlineKeyboardMarkup]:
     async with AsyncSessionLocal() as db:
         event = await db.get(Event, event_id)
         if not event or event.status != EventStatus.PUBLISHED:
-            return "Встреча не найдена или запись уже закрыта.", main_menu_kb()
+            return "Встреча не найдена или запись на неё уже закрыта.", main_menu_kb()
 
         occupied = await crud.get_occupied_seats(db, event.id)
         avail = max(0, event.max_seats - occupied)
@@ -343,16 +346,54 @@ async def render_event_card(event_id: int) -> tuple[str, InlineKeyboardMarkup]:
         if event.location_details:
             place_str += f" ({event.location_details})"
 
+        user = await crud.get_user_by_platform(db, PlatformType.TG, tg_user_id) if tg_user_id else None
+
+        # Проверяем, не записан ли уже этот пользователь на данную встречу
+        if user:
+            reg_stmt = select(Registration).where(
+                Registration.user_id == user.id,
+                Registration.event_id == event.id,
+                Registration.status != RegistrationStatus.CANCELLED,
+            )
+            existing_reg = (await db.execute(reg_stmt)).scalar_one_or_none()
+            if existing_reg:
+                status_note = (
+                    "вы уже в основном списке участников"
+                    if existing_reg.status in (RegistrationStatus.REGISTERED, RegistrationStatus.CONFIRMED)
+                    else "вы уже находитесь в листе ожидания"
+                )
+                text = (
+                    f"🧡 <b>{user.first_name}, {status_note}!</b>\n\n"
+                    f"📌 <b>{event.title}</b> ({event.kind})\n"
+                    f"📅 <b>Когда:</b> {ev_date} в {ev_time}\n"
+                    f"📍 <b>Где:</b> {place_str}\n\n"
+                    f"Если ваши планы изменились, вы можете отменить запись кнопкой ниже:"
+                )
+                kb = InlineKeyboardMarkup(
+                    inline_keyboard=[
+                        [InlineKeyboardButton(text="❌ Отменить мою запись", callback_data=f"cancel_{existing_reg.id}")],
+                        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="back_home")],
+                    ]
+                )
+                return text, kb
+
         safety_note = ""
         if event.requires_safety_ack:
             safety_note = (
                 f"\n\n⚠️ <b>Техника безопасности:</b> на мастер-классе используются колющие и режущие "
-                f"инструменты. Нажимая кнопку записи, вы подтверждаете согласие с "
+                f"инструменты. Записываясь, вы подтверждаете согласие с "
                 f"<a href='{settings.SAFETY_PRECAUTIONS_URL}'>Правилами техники безопасности</a>."
             )
 
+        greeting = (
+            f"🧡 <b>{user.first_name}, записать вас на эту встречу?</b>\n\n"
+            if user
+            else "✨ <b>Приглашаем на встречу в студию «Грея душу»!</b>\n\n"
+        )
+
         text = (
-            f"✨ <b>{event.title}</b> ({event.kind})\n\n"
+            f"{greeting}"
+            f"📌 <b>{event.title}</b> ({event.kind})\n\n"
             f"{event.description}\n\n"
             f"📅 <b>Когда:</b> {ev_date} в {ev_time} ({event.duration or '2 часа'})\n"
             f"📍 <b>Где:</b> {place_str}\n"
@@ -361,37 +402,57 @@ async def render_event_card(event_id: int) -> tuple[str, InlineKeyboardMarkup]:
             f"{safety_note}"
         )
 
-        btn_text = (
-            "✅ Записаться (с ТБ ознакомлен)"
-            if avail > 0
-            else "⏳ Встать в лист ожидания (с ТБ ознакомлен)"
-        )
         buttons = []
-        if settings.WEBAPP_URL and settings.WEBAPP_URL.startswith("https://"):
-            buttons.append(
-                [
-                    InlineKeyboardButton(
-                        text="🗺 Открыть с картой в Mini App",
-                        web_app=WebAppInfo(url=f"{settings.WEBAPP_URL}?event_id={event.id}"),
-                    )
-                ]
+        if user:
+            # Постоянный гость: запись в 1 клик на первом месте
+            btn_text = (
+                "✅ Да, записаться в 1 клик!"
+                if avail > 0
+                else "⏳ Записаться в лист ожидания"
             )
-        buttons.append([InlineKeyboardButton(text=btn_text, callback_data=f"book_{event.id}")])
-        buttons.append([InlineKeyboardButton(text="⬅️ К списку встреч", callback_data="menu_events")])
+            buttons.append([InlineKeyboardButton(text=btn_text, callback_data=f"book_{event.id}")])
+            if settings.WEBAPP_URL and settings.WEBAPP_URL.startswith("https://"):
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text="🗺 Открыть с картой в приложении",
+                            web_app=WebAppInfo(url=f"{settings.WEBAPP_URL}?event_id={event.id}"),
+                        )
+                    ]
+                )
+        else:
+            # Новый гость: предлагаем красивую анкету Mini App или запись в чате
+            if settings.WEBAPP_URL and settings.WEBAPP_URL.startswith("https://"):
+                buttons.append(
+                    [
+                        InlineKeyboardButton(
+                            text="✨ Записаться через приложение (Mini App)",
+                            web_app=WebAppInfo(url=f"{settings.WEBAPP_URL}?event_id={event.id}"),
+                        )
+                    ]
+                )
+            btn_chat_text = (
+                "💬 Записаться прямо в чате бота"
+                if avail > 0
+                else "⏳ Встать в лист ожидания через чат"
+            )
+            buttons.append([InlineKeyboardButton(text=btn_chat_text, callback_data=f"book_{event.id}")])
 
+        buttons.append([InlineKeyboardButton(text="👀 Посмотреть другие встречи", callback_data="menu_events")])
         return text, InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, command: CommandObject, state: FSMContext):
     await state.clear()
-    await save_telegram_subscriber(str(message.from_user.id), message.from_user.username)
+    tg_uid = str(message.from_user.id)
+    await save_telegram_subscriber(tg_uid, message.from_user.username)
 
     args = command.args
     if args and args.startswith("event_"):
         try:
             event_id = int(args.split("_")[1])
-            text, kb = await render_event_card(event_id)
+            text, kb = await render_event_card(event_id, tg_user_id=tg_uid)
             await message.answer(text, reply_markup=kb, parse_mode="HTML", disable_web_page_preview=True)
             return
         except ValueError:
@@ -399,8 +460,8 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
 
     welcome_text = (
         "🧡 <b>Приветствуем в творческом пространстве «Грея душу»!</b>\n\n"
-        "Мы - творческое объединение из Тюмени, где рождаются уютные проекты и теплое общение."
-        "Здесь вы можете:\n"
+        "Мы — студия дизайна из Тюмени, где рождаются уютные проекты, теплое общение "
+        "и красивые вещи ручной работы. Здесь вы можете:\n"
         "• 🪡 Узнать о предстоящих творческих и социальных мастер-классах.\n"
         "• 🌿 Записаться на встречи в пару кликов без лишних заполнений.\n"
         "• 📋 Управлять своими записями и всегда быть в курсе расписания.\n\n"
@@ -457,7 +518,7 @@ async def back_home_handler(call: CallbackQuery):
 @router.callback_query(F.data.startswith("event_"))
 async def open_event_handler(call: CallbackQuery):
     event_id = int(call.data.split("_")[1])
-    text, kb = await render_event_card(event_id)
+    text, kb = await render_event_card(event_id, tg_user_id=str(call.from_user.id))
     await call.message.edit_text(text, reply_markup=kb, parse_mode="HTML", disable_web_page_preview=True)
 
 

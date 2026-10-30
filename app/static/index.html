@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Manrope:wght@400;500;600;700&family=Nunito:wght@700;800&display=swap" rel="stylesheet" />
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="/static/telegram-web-app.js"></script>
 
     <style>
         :root {
@@ -753,6 +753,7 @@
             <button type="button" id="subTabGuestsBtn" class="btn btn-primary btn-sm" style="flex:1;" onclick="switchAdminMode('guests')">👥 Участники</button>
             <button type="button" id="subTabEditBtn" class="btn btn-ghost btn-sm" style="flex:1;" onclick="switchAdminMode('form')">✏️ Редактировать</button>
             <button type="button" class="btn btn-ghost btn-sm" onclick="broadcastCurrentEvent()">📢 Анонс в ТГ</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="copyTgChannelLink()">📲 Ссылка для ТГ-канала</button>
             <button type="button" class="btn btn-ghost btn-sm" onclick="copySiteEmbedUrl()">🔗 Анкета для сайта</button>
         </div>
 
@@ -1604,6 +1605,21 @@
             showAlert('Ссылка на анкету скопирована! Вставьте её на сайте в поле «Ссылка на Яндекс Форму».');
         }).catch(() => {
             prompt('Скопируйте ссылку для вставки на сайт:', embedUrl);
+        });
+    }
+
+    async function copyTgChannelLink() {
+        if (!selectedAdminEventId) return;
+        const res = await fetch(`/api/admin/events/${selectedAdminEventId}/tg-link`);
+        const data = await res.json();
+        if (!res.ok) {
+            showAlert(data.detail || 'Не удалось получить ссылку бота');
+            return;
+        }
+        navigator.clipboard.writeText(data.deep_link).then(() => {
+            showAlert('Ссылка для поста в ТГ-канале скопирована! Зашейте её в слово «Записаться» в посте.');
+        }).catch(() => {
+            prompt('Скопируйте эту ссылку для кнопки «Записаться» в посте ТГ-канала:', data.deep_link);
         });
     }
 

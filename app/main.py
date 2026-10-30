@@ -375,6 +375,21 @@ async def broadcast_event_from_admin(event_id: int, db: AsyncSession = Depends(g
     return {"sent_count": sent_count, "message": f"Анонс отправлен {sent_count} подписчикам бота!"}
 
 
+@app.get("/api/admin/events/{event_id}/tg-link")
+async def get_event_tg_deep_link(event_id: int):
+    """Возвращает прямую ссылку на запись в боте для вставки в пост Telegram-канала"""
+    username = tg_bot.bot_username
+    if not username:
+        bot = tg_bot.get_bot()
+        if bot:
+            me = await bot.get_me()
+            username = me.username or ""
+            tg_bot.bot_username = username
+    if not username:
+        raise HTTPException(status_code=400, detail="Бот еще не подключен или токен не задан")
+    return {"deep_link": f"https://t.me/{username}?start=event_{event_id}"}
+
+
 @app.get("/api/admin/registrations")
 async def get_all_registrations_for_admin(
     event_id: int | None = None, db: AsyncSession = Depends(get_db)
